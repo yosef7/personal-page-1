@@ -1,2 +1,3 @@
-# personal-page-1
- 
+# Página Web Personal
+
+ Lenguajes de programación utilizados (**HTML, CSS y JavaScript**)
