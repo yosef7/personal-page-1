@@ -2,4 +2,4 @@
 
  Lenguajes de programación utilizados (**HTML, CSS y JavaScript**)
 
- - Por: Arnulfo Reyes
+- Por: Arnulfo Reyes
