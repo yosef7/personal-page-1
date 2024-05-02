@@ -12262,6 +12262,22 @@ header.masthead .post-heading .meta a {
   text-decoration: none;
 }
 
+.rounded-img {
+  border-radius: 50%;
+}
+
+.centered-paragraph {
+  text-align: center;
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 @media (min-width: 992px) {
   .post-preview>a>.post-title {
     font-size: 2.25rem;
