@@ -12270,7 +12270,10 @@ header.masthead .post-heading .meta a {
   text-align: center;
   margin-top: 50px;
   margin-bottom: 50px;
+  white-space: pre-line;
+  /* Permite saltos de línea en el texto */
 }
+
 
 .center {
   display: block;
@@ -12281,5 +12284,15 @@ header.masthead .post-heading .meta a {
 @media (min-width: 992px) {
   .post-preview>a>.post-title {
     font-size: 2.25rem;
+  }
+}
+
+.masthead {
+  background-image: url('assets/img/bg-masthead.jpg');
+}
+
+@media (max-width: 768px) {
+  .masthead {
+    background-image: url('assets/img/bg-masthead-small.jpg');
   }
 }
