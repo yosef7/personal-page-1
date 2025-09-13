@@ -12290,9 +12290,3 @@ header.masthead .post-heading .meta a {
 .masthead {
   background-image: url('assets/img/bg-masthead.jpg');
 }
-
-@media (max-width: 768px) {
-  .masthead {
-    background-image: url('assets/img/bg-masthead-small.jpg');
-  }
-}
