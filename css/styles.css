@@ -12290,3 +12290,8 @@ header.masthead .post-heading .meta a {
 .masthead {
   background-image: url('assets/img/bg-masthead.jpg');
 }
+
+/* Blog list small tweaks */
+.blog-list .post-preview { margin-bottom: 1.5rem; }
+.blog-list .post-preview .post-title { margin-bottom: .25rem; }
+.blog-list .post-preview .post-subtitle { color: #6c757d; font-weight: 400; }
