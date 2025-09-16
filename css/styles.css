@@ -12266,6 +12266,11 @@ header.masthead .post-heading .meta a {
   border-radius: 50%;
 }
 
+.author-name {
+  margin-top: 1rem;
+  margin-bottom: 1.25rem;
+}
+
 .centered-paragraph {
   text-align: center;
   margin-top: 50px;
