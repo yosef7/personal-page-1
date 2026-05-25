@@ -37,9 +37,4 @@ Si eres responsable de publicar dashboard o debes interpretar datos, no dudes en
 
 Gracias por leer mi publicación. Recibo con mucho agrado los comentarios y las críticas constructivas.
 
-Me pueden encontrar en IG [@arnulfo](https://www.instagram.com/jareyes_07).
-
-[![Imagen de ejemplo del artículo](assets/img/post-sample-image.jpg)](assets/img/post-sample-image.jpg)
-*To go places and do things that have never been done before – that’s what living is all about.*
-
-Placeholder text by [Space Ipsum](http://spaceipsum.com/) · Images by [NASA on The Commons](https://www.flickr.com/photos/nasacommons/)
+Me pueden encontrar en IG @arnulfo.
