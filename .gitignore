@@ -1,0 +1,5 @@
+AGENTS.md
+.playwright-mcp/
+.DS_Store
+*.log
+*.tmp
