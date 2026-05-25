@@ -1,5 +1,13 @@
 [
   {
+    "slug": "liderazgo-360",
+    "title": "Liderazgo técnico 360",
+    "subtitle": "Un sistema práctico para recibir retroalimentación y mejorar como líder técnico.",
+    "date": "2026-05-23",
+    "author": "Arnulfo Reyes",
+    "image": "assets/img/liderazgo-360.jpg"
+  },
+  {
     "slug": "que-tan-ciertas-son-las-estadisticas",
     "title": "¿Qué tan ciertas son las estadísticas?",
     "subtitle": "Ser crítico al analizar datos para evitar sesgos y engaños.",
@@ -8,4 +16,3 @@
     "image": "assets/img/post-bg.jpg"
   }
 ]
-
