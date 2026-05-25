@@ -12300,3 +12300,39 @@ header.masthead .post-heading .meta a {
 .blog-list .post-preview { margin-bottom: 1.5rem; }
 .blog-list .post-preview .post-title { margin-bottom: .25rem; }
 .blog-list .post-preview .post-subtitle { color: #6c757d; font-weight: 400; }
+
+.post-diagram {
+  position: relative;
+  left: 50%;
+  width: min(960px, calc(100vw - 2rem));
+  margin: 2.5rem 0;
+  padding: 1.25rem;
+  transform: translateX(-50%);
+  border: 1px solid #dbe4ea;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(20, 184, 166, 0.08), rgba(234, 88, 12, 0.06)),
+    #ffffff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  overflow-x: auto;
+}
+
+.post-diagram__canvas {
+  min-width: 760px;
+}
+
+.post-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 767px) {
+  .post-diagram {
+    padding: 0.875rem;
+  }
+
+  .post-diagram__canvas {
+    min-width: 680px;
+  }
+}
