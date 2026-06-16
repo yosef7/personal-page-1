@@ -12336,3 +12336,85 @@ header.masthead .post-heading .meta a {
     min-width: 680px;
   }
 }
+
+/* ---- Contenido del post renderizado desde Markdown ---- */
+
+/* Tablas: envoltura con scroll horizontal en pantallas estrechas. */
+.post-table-wrap {
+  margin: 1.75rem 0;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+#post-content table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+#post-content thead th {
+  background: #f1f5f9;
+  border-bottom: 2px solid #cbd5e1;
+  text-align: left;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+#post-content th,
+#post-content td {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid #e8edf2;
+  vertical-align: top;
+}
+
+#post-content tbody tr:nth-child(odd) {
+  background: #f9fbfd;
+}
+
+#post-content tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Bloques de código: fondo, padding y scroll horizontal legible. */
+#post-content pre {
+  margin: 1.75rem 0;
+  padding: 1rem 1.15rem;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  overflow-x: auto;
+  line-height: 1.55;
+}
+
+#post-content pre code {
+  color: #e2e8f0;
+  white-space: pre;
+  background: none;
+  padding: 0;
+}
+
+/* Código en línea: sutil, sin el rosa por defecto del tema. */
+#post-content :not(pre) > code {
+  padding: 0.15rem 0.4rem;
+  color: #0f172a;
+  background: #eef2f7;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+
+/* Citas / recomendaciones destacadas. */
+#post-content blockquote {
+  margin: 1.75rem 0;
+  padding: 0.85rem 1.15rem;
+  border-left: 4px solid #14b8a6;
+  background: #f0fdfa;
+  border-radius: 0 8px 8px 0;
+  color: #0f172a;
+}
+
+#post-content blockquote > :last-child {
+  margin-bottom: 0;
+}

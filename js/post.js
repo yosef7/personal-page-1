@@ -11,47 +11,120 @@
   const headerEl = document.getElementById('post-header');
   const contentEl = document.getElementById('post-content');
 
-  function renderMermaidDiagrams() {
+  // Config común a todos los diagramas (independiente del tema).
+  const MERMAID_BASE_CONFIG = {
+    startOnLoad: false,
+    securityLevel: 'loose',
+    fontFamily: '"Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    flowchart: {
+      curve: 'basis',
+      htmlLabels: true,
+      nodeSpacing: 56,
+      rankSpacing: 64
+    }
+  };
+
+  // Paleta propia del sitio (solo aplica al tema 'base', el predeterminado).
+  const SITE_BASE_THEME_VARIABLES = {
+    primaryColor: '#f8fafc',
+    primaryTextColor: '#0f172a',
+    primaryBorderColor: '#94a3b8',
+    lineColor: '#94a3b8',
+    secondaryColor: '#ecfeff',
+    tertiaryColor: '#fff7ed',
+    clusterBkg: '#f8fafc',
+    clusterBorder: '#cbd5e1',
+    edgeLabelBackground: '#ffffff'
+  };
+
+  const ALLOWED_THEMES = ['base', 'default', 'neutral', 'forest', 'dark'];
+
+  // Tema por diagrama: se lee del propio bloque Mermaid (directiva init,
+  // frontmatter `config: theme:` o un comentario `%% theme: forest %%`).
+  // Sin indicación se usa 'base' con la paleta del sitio.
+  function pickTheme(source) {
+    const match = source.match(/theme["'\s:]+\s*["']?(base|default|neutral|forest|dark)["']?/i);
+    const name = match && match[1].toLowerCase();
+    return ALLOWED_THEMES.indexOf(name) !== -1 ? name : 'base';
+  }
+
+  function buildMermaidConfig(themeName) {
+    const config = Object.assign({}, MERMAID_BASE_CONFIG, { theme: themeName });
+    if (themeName === 'base') {
+      config.themeVariables = Object.assign(
+        { fontFamily: MERMAID_BASE_CONFIG.fontFamily },
+        SITE_BASE_THEME_VARIABLES
+      );
+    }
+    return config;
+  }
+
+  async function renderMermaidDiagrams() {
     const diagrams = contentEl.querySelectorAll('pre code.language-mermaid');
     if (!diagrams.length || !window.mermaid) return;
 
-    diagrams.forEach((codeEl) => {
+    let index = 0;
+    for (const codeEl of diagrams) {
+      const source = codeEl.textContent;
+
       const figure = document.createElement('figure');
       figure.className = 'post-diagram';
       figure.setAttribute('aria-label', 'Diagrama del modelo');
 
-      const wrapper = document.createElement('div');
-      wrapper.className = 'mermaid post-diagram__canvas';
-      wrapper.textContent = codeEl.textContent;
+      const canvas = document.createElement('div');
+      canvas.className = 'post-diagram__canvas';
 
-      figure.appendChild(wrapper);
+      figure.appendChild(canvas);
       codeEl.closest('pre').replaceWith(figure);
-    });
 
-    window.mermaid.initialize({
-      startOnLoad: false,
-      theme: 'base',
-      securityLevel: 'loose',
-      flowchart: {
-        curve: 'basis',
-        htmlLabels: true,
-        nodeSpacing: 56,
-        rankSpacing: 64
-      },
-      themeVariables: {
-        fontFamily: '"Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-        primaryColor: '#f8fafc',
-        primaryTextColor: '#0f172a',
-        primaryBorderColor: '#94a3b8',
-        lineColor: '#94a3b8',
-        secondaryColor: '#ecfeff',
-        tertiaryColor: '#fff7ed',
-        clusterBkg: '#f8fafc',
-        clusterBorder: '#cbd5e1',
-        edgeLabelBackground: '#ffffff'
+      // Render aislado por diagrama para que cada uno use su propio tema.
+      try {
+        window.mermaid.initialize(buildMermaidConfig(pickTheme(source)));
+        const { svg } = await window.mermaid.render(`post-diagram-${index++}`, source);
+        canvas.innerHTML = svg;
+      } catch (err) {
+        figure.replaceWith(codeEl.closest('pre') || figure);
       }
+    }
+  }
+
+  // Envuelve cada tabla del Markdown para permitir scroll horizontal en móvil
+  // sin romper el ancho de la columna del artículo.
+  function wrapTables() {
+    contentEl.querySelectorAll('table').forEach((table) => {
+      if (table.closest('.post-table-wrap')) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'post-table-wrap';
+      table.replaceWith(wrap);
+      wrap.appendChild(table);
     });
-    window.mermaid.run({ nodes: contentEl.querySelectorAll('.mermaid') }).catch(() => {});
+  }
+
+  // Resaltado de sintaxis. Respeta el lenguaje declarado (```python) y, si no
+  // hay ninguno, deja que highlight.js lo detecte. Excluye los bloques Mermaid,
+  // que se transforman en diagramas, no en código.
+  function highlightCode() {
+    if (!window.hljs) return;
+    contentEl.querySelectorAll('pre code').forEach((block) => {
+      if (block.classList.contains('language-mermaid')) return;
+      window.hljs.highlightElement(block);
+    });
+  }
+
+  // Tipografía matemática: espera a que MathJax cargue (async) y compone solo
+  // el contenido inyectado dinámicamente.
+  function typesetMath() {
+    const MJ = window.MathJax;
+    if (!MJ) {
+      setTimeout(typesetMath, 100);
+      return;
+    }
+    const run = () => MJ.typesetPromise([contentEl]).catch(() => {});
+    if (MJ.startup && MJ.startup.promise) {
+      MJ.startup.promise.then(run).catch(() => {});
+    } else if (MJ.typesetPromise) {
+      run();
+    }
   }
 
   if (!slug) {
@@ -83,7 +156,10 @@
     })
     .then((md) => {
       contentEl.innerHTML = window.marked ? marked.parse(md) : md;
+      wrapTables();
+      highlightCode();
       renderMermaidDiagrams();
+      typesetMath();
     })
     .catch(() => {
       titleEl.textContent = 'No se pudo cargar el artículo';

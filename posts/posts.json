@@ -1,5 +1,13 @@
 [
   {
+    "slug": "escalar-sin-romper",
+    "title": "Escalar lo que funciona sin romperlo",
+    "subtitle": "Cinco años de investigación sobre tutoría y lo que enseñan a quien dirige tecnología.",
+    "date": "2026-06-15",
+    "author": "Arnulfo Reyes",
+    "image": "assets/img/escalar-sin-romper.jpg"
+  },
+  {
     "slug": "liderazgo-360",
     "title": "Liderazgo técnico 360",
     "subtitle": "Un sistema práctico para recibir retroalimentación y mejorar como líder técnico.",
