@@ -3,3 +3,7 @@ AGENTS.md
 .DS_Store
 *.log
 *.tmp
+
+# Claude Code: versionar solo los skills del proyecto, ignorar config local
+.claude/*
+!.claude/skills/
