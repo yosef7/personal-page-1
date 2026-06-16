@@ -1,9 +1,47 @@
+# Proyecto / herramientas locales
 AGENTS.md
 .playwright-mcp/
-.DS_Store
-*.log
-*.tmp
 
 # Claude Code: versionar solo los skills del proyecto, ignorar config local
 .claude/*
 !.claude/skills/
+
+# Logs y temporales
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Dependencias / build (si más adelante se añade tooling)
+node_modules/
+dist/
+.cache/
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Editores / IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
