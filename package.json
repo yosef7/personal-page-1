@@ -1,0 +1,8 @@
+{
+  "name": "personal-page-1",
+  "private": true,
+  "description": "Sitio estático personal. Sin build propio; esta dependencia solo la usa la Netlify Function de Garage 164 (netlify/functions/vault.mjs).",
+  "dependencies": {
+    "@netlify/blobs": "^9.0.0"
+  }
+}
