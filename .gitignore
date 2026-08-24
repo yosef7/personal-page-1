@@ -25,6 +25,9 @@ dist/
 .env.*
 !.env.example
 
+# Datos sin cifrar de Garage 164 (solo se publica vault.enc.json)
+garage164/data.json
+
 # Editores / IDE
 .vscode/
 .idea/

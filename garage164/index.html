@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="color-scheme" content="dark" />
+    <title>Garage 164</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="access-shell" id="access-shell">
+      <section class="access-card" aria-labelledby="access-title">
+        <p class="eyebrow">Acceso reservado</p>
+        <h1 id="access-title">Garage 164</h1>
+        <p class="intro">La colección está cifrada. Ingresa la contraseña compartida para verla.</p>
+        <form id="access-form" novalidate>
+          <label for="password">Contraseña</label>
+          <div class="password-row">
+            <input id="password" name="password" type="password" autocomplete="current-password" required autofocus />
+            <button class="text-button" type="button" id="toggle-password" aria-label="Mostrar contraseña">Mostrar</button>
+          </div>
+          <button class="primary-button" type="submit">Abrir colección</button>
+          <p class="form-message" id="form-message" role="alert" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+
+    <main class="garage" id="garage" hidden>
+      <header class="garage-header">
+        <div>
+          <p class="eyebrow">Colección compartida</p>
+          <h1 id="collection-name">Garage 164</h1>
+          <p class="updated-at" id="updated-at"></p>
+        </div>
+        <button class="text-button" type="button" id="lock-button">Cerrar</button>
+      </header>
+
+      <section class="stats" aria-label="Resumen de la colección">
+        <article><span id="unique-models">0</span><small>modelos</small></article>
+        <article><span id="total-cars">0</span><small>carritos</small></article>
+        <article><span id="duplicate-cars">0</span><small>duplicados</small></article>
+        <article><span id="wishlist-count">0</span><small>por conseguir</small></article>
+      </section>
+
+      <section class="catalog-section" aria-labelledby="catalog-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Inventario</p>
+            <h2 id="catalog-title">Colección</h2>
+          </div>
+          <label class="search-label" for="search">Buscar <input id="search" type="search" placeholder="Modelo, serie o color" /></label>
+        </div>
+        <p class="empty-state" id="no-results" hidden>No hay resultados para esa búsqueda.</p>
+        <div class="cars-grid" id="cars-grid"></div>
+      </section>
+
+      <section class="wishlist-section" id="wishlist-section" aria-labelledby="wishlist-title" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Próximas piezas</p>
+            <h2 id="wishlist-title">Lista de deseos</h2>
+          </div>
+        </div>
+        <div class="wishlist-grid" id="wishlist-grid"></div>
+      </section>
+    </main>
+
+    <noscript>Garage 164 necesita JavaScript para descifrar los datos.</noscript>
+    <script src="app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "collectionName": "Garage 164",
+  "updatedAt": "2026-08-23",
+  "cars": [
+    {
+      "model": "Twin Mill",
+      "brand": "Hot Wheels",
+      "series": "HW Originals",
+      "year": 2023,
+      "color": "Naranja",
+      "package": "Sellado",
+      "location": "Vitrina",
+      "quantity": 1,
+      "notes": ""
+    }
+  ],
+  "wishlist": [
+    {
+      "model": "Toyota Supra MK4",
+      "series": "Fast & Furious",
+      "year": 2024,
+      "color": "Naranja",
+      "priority": "alta",
+      "where": "",
+      "notes": ""
+    }
+  ]
+}
