@@ -127,6 +127,26 @@
     }
   }
 
+  // Actualiza la descripción y las etiquetas Open Graph/Twitter con los datos
+  // del artículo cargado. No ayuda a los scrapers (no ejecutan JS), pero deja
+  // la página coherente para quien sí evalúa el DOM.
+  function updateMeta(post) {
+    const desc = post.subtitle || `Publicación de ${post.author || 'Arnulfo Reyes'}.`;
+    const setAttr = (selector, attr, value) => {
+      const el = document.head.querySelector(selector);
+      if (el) el.setAttribute(attr, value);
+    };
+    setAttr('meta[name="description"]', 'content', desc);
+    setAttr('meta[property="og:title"]', 'content', `${post.title} - Arnulfo Reyes`);
+    setAttr('meta[property="og:description"]', 'content', desc);
+    setAttr('meta[name="twitter:title"]', 'content', `${post.title} - Arnulfo Reyes`);
+    setAttr('meta[name="twitter:description"]', 'content', desc);
+    if (post.image) {
+      setAttr('meta[property="og:image"]', 'content', post.image);
+      setAttr('meta[name="twitter:image"]', 'content', post.image);
+    }
+  }
+
   if (!slug) {
     titleEl.textContent = 'Publicación no encontrada';
     contentEl.innerHTML = '<p>No se especificó ninguna publicación. <a href="blog.html">Volver al blog</a>.</p>';
@@ -140,6 +160,7 @@
       if (!post) throw new Error('not-found');
 
       document.title = `${post.title} - Arnulfo Reyes`;
+      updateMeta(post);
       titleEl.textContent = post.title;
       if (post.subtitle) subtitleEl.textContent = post.subtitle; else subtitleEl.remove();
       const date = new Date(post.date);

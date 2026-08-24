@@ -12117,8 +12117,16 @@ header.masthead:before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #212529;
-  opacity: 0.5;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.35) 0%, rgba(15, 23, 42, 0.6) 100%);
+}
+
+header.masthead .site-heading h1,
+header.masthead .site-heading .h1,
+header.masthead .page-heading h1,
+header.masthead .page-heading .h1,
+header.masthead .post-heading h1,
+header.masthead .post-heading .h1 {
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
 }
 
 header.masthead .page-heading,
@@ -12143,9 +12151,9 @@ header.masthead .page-heading .subheading,
 header.masthead .site-heading .subheading {
   font-size: 1.5rem;
   font-weight: 300;
-  line-height: 1.1;
+  line-height: 1.35;
   display: block;
-  margin-top: 0.625rem;
+  margin-top: 0.9rem;
   font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -12273,17 +12281,60 @@ header.masthead .post-heading .meta a {
 
 .centered-paragraph {
   text-align: center;
-  margin-top: 50px;
-  margin-bottom: 50px;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+  line-height: 1.7;
   white-space: pre-line;
   /* Permite saltos de línea en el texto */
 }
 
+/* Sección de presentación de la home (debajo del hero). */
+.intro {
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+}
 
-.center {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+.intro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+/* Botones de llamada a la acción, en la paleta teal del sitio. */
+.btn-cta {
+  display: inline-block;
+  padding: 0.65rem 1.6rem;
+  border-radius: 999px;
+  font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 2px solid #0085a1;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.btn-cta--primary {
+  background-color: #0085a1;
+  color: #fff;
+}
+
+.btn-cta--primary:hover,
+.btn-cta--primary:focus {
+  background-color: #006d85;
+  border-color: #006d85;
+  color: #fff;
+}
+
+.btn-cta--ghost {
+  background-color: transparent;
+  color: #0085a1;
+}
+
+.btn-cta--ghost:hover,
+.btn-cta--ghost:focus {
+  background-color: #0085a1;
+  color: #fff;
 }
 
 @media (min-width: 992px) {
@@ -12294,6 +12345,80 @@ header.masthead .post-heading .meta a {
 
 .masthead {
   background-image: url('assets/img/bg-masthead.jpg');
+}
+
+/* Sección de servicios de la home (tarjetas con icono). */
+.features-icons {
+  padding: 4rem 0;
+}
+
+@media (min-width: 992px) {
+  .features-icons {
+    padding: 5rem 0;
+  }
+}
+
+.features-heading {
+  margin-bottom: 3rem;
+}
+
+.features-heading .eyebrow {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0085a1;
+}
+
+.features-heading h2 {
+  font-weight: 700;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.features-icons-item {
+  max-width: 22rem;
+  height: 100%;
+  padding: 2.25rem 1.75rem;
+  background-color: #fff;
+  border: 1px solid #e7ecef;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.features-icons-item:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+
+.features-icons-icon {
+  width: 4.75rem;
+  height: 4.75rem;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00a3c4, #0085a1);
+  box-shadow: 0 8px 20px rgba(0, 133, 161, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.features-icons-icon i {
+  font-size: 1.85rem;
+}
+
+.features-icons-item h3 {
+  font-weight: 700;
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.features-icons-item .lead {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #5b6770;
 }
 
 /* Blog list small tweaks */
@@ -12417,4 +12542,130 @@ header.masthead .post-heading .meta a {
 
 #post-content blockquote > :last-child {
   margin-bottom: 0;
+}
+
+/* ---- Refinamiento tipográfico y de iconos ---- */
+
+/* Suavizado de fuentes y mejor renderizado del texto. */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Títulos: tracking más ajustado y ligaduras tipográficas. */
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
+  letter-spacing: -0.015em;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+/* Cuerpo de texto del post: lectura más cómoda. */
+#post-content {
+  line-height: 1.75;
+  letter-spacing: 0.003em;
+}
+
+#post-content p {
+  margin-bottom: 1.35rem;
+}
+
+/* Enlaces: subrayado sutil y transición suave. */
+#post-content a {
+  color: #0085a1;
+  text-decoration-color: rgba(0, 133, 161, 0.35);
+  text-underline-offset: 0.18em;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+#post-content a:hover {
+  color: #006d85;
+  text-decoration-color: currentColor;
+}
+
+/* Iconos de servicios: glifo blanco sobre el círculo de marca. */
+.features-icons-icon i {
+  color: #fff !important;
+}
+
+/* Tarjeta: acento superior que aparece al pasar el cursor. */
+.features-icons-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.features-icons-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #00a3c4, #0085a1);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+
+.features-icons-item:hover::before {
+  transform: scaleX(1);
+}
+
+.features-icons-item:hover .features-icons-icon {
+  transform: scale(1.06);
+  box-shadow: 0 12px 26px rgba(0, 133, 161, 0.34);
+}
+
+/* El título de cada tarjeta toma el color de marca al pasar el cursor. */
+.features-icons-item h3 {
+  transition: color 0.2s ease;
+}
+
+.features-icons-item:hover h3 {
+  color: #0085a1;
+}
+
+/* Iconos sociales del footer: círculo de marca, hover elevado y por red. */
+footer .list-inline-item {
+  margin: 0 0.35rem;
+}
+
+footer .fa-stack {
+  font-size: 1.15rem;
+  transition: transform 0.18s ease;
+}
+
+footer .fa-stack .fa-circle {
+  color: #1f2937;
+  transition: color 0.18s ease, box-shadow 0.18s ease;
+}
+
+footer a:hover .fa-stack,
+footer a:focus .fa-stack {
+  transform: translateY(-4px);
+}
+
+footer a:hover .fa-medium ~ .fa-circle,
+footer a:focus .fa-medium ~ .fa-circle {
+  color: #000;
+}
+
+/* La pila de Font Awesome pinta el glifo encima; coloreamos por el círculo. */
+footer a:hover .fa-stack .fa-circle {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22);
+  border-radius: 50%;
+}
+
+footer a[aria-label*="Medium"]:hover .fa-stack .fa-circle,
+footer a[aria-label*="Medium"]:focus .fa-stack .fa-circle {
+  color: #000;
+}
+
+footer a[aria-label*="LinkedIn"]:hover .fa-stack .fa-circle,
+footer a[aria-label*="LinkedIn"]:focus .fa-stack .fa-circle {
+  color: #0a66c2;
+}
+
+footer a[aria-label*="Instagram"]:hover .fa-stack .fa-circle,
+footer a[aria-label*="Instagram"]:focus .fa-stack .fa-circle {
+  color: #d6249f;
 }
