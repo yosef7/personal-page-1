@@ -24,6 +24,7 @@ body {
 button, input { font: inherit; }
 
 .access-shell { display: grid; min-height: 100vh; place-items: center; padding: 24px; }
+.access-shell[hidden] { display: none; }
 
 .access-card {
   width: min(100%, 420px);
