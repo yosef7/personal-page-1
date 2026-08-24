@@ -57,7 +57,11 @@ export default async (req) => {
     const opciones = etag ? { onlyIfMatch: etag } : { onlyIfNew: true }
     const resultado = await store.setJSON(KEY, vault, opciones)
 
-    if (!resultado.modified) {
+    // En la primerísima escritura a un almacén recién creado se ha visto a
+    // setJSON devolver undefined en vez de {modified, etag} (caso límite de
+    // aprovisionamiento). Lo tratamos igual que "no modificado": el cliente
+    // ya sabe reaccionar a un 409 recargando, en vez de recibir un 502 opaco.
+    if (!resultado || !resultado.modified) {
       return Response.json({ error: 'conflict' }, { status: 409 })
     }
 
