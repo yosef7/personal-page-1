@@ -1,23 +1,35 @@
 #!/usr/bin/env bash
 #
-# Diagnostica por qué una contraseña abre (o no) garage164/vault.enc.json.
-# Prueba la clave tal cual y sus variantes de codificación Unicode.
-# La contraseña no se muestra, no se guarda y no sale de tu computadora.
+# Diagnostica por qué una contraseña abre (o no) la colección publicada.
+# Descarga el vault vigente desde la Function en vivo (o desde
+# GARAGE164_VAULT_URL si lo indicas) y prueba la clave y sus variantes de
+# codificación Unicode. La contraseña no se muestra, no se guarda y no sale
+# de tu computadora.
 
 set -euo pipefail
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$RAIZ"
 
-[ -f garage164/vault.enc.json ] || { echo "No existe garage164/vault.enc.json"; exit 1; }
+URL="${GARAGE164_VAULT_URL:-https://www.arnulforeyes.com/garage164/api/vault}"
 
 read -rsp "Contraseña a probar: " CLAVE; echo
-echo "Verificando variantes (cada una tarda un momento)…"
+echo "Verificando variantes contra $URL (cada una tarda un momento)…"
 
-GARAGE164_TEST_PASS="$CLAVE" node --input-type=module -e '
-import { readFile } from "node:fs/promises"
+GARAGE164_TEST_PASS="$CLAVE" GARAGE164_TEST_URL="$URL" node --input-type=module -e '
 import { webcrypto } from "node:crypto"
 
-const vault = JSON.parse(await readFile("garage164/vault.enc.json", "utf8"))
+const url = process.env.GARAGE164_TEST_URL
+const respuesta = await fetch(url, { cache: "no-store" })
+if (respuesta.status === 404) {
+  console.error("\nLa colección todavía no está publicada en esa URL (404).")
+  process.exit(1)
+}
+if (!respuesta.ok) {
+  console.error(`\nNo se pudo leer ${url} (HTTP ${respuesta.status}).`)
+  process.exit(1)
+}
+const vault = await respuesta.json()
+
 const pass = process.env.GARAGE164_TEST_PASS
 const b64 = (v) => Uint8Array.from(Buffer.from(v, "base64"))
 
@@ -62,4 +74,4 @@ if (nfc === nfd) {
 }
 console.log()
 '
-unset GARAGE164_TEST_PASS CLAVE
+unset GARAGE164_TEST_PASS GARAGE164_TEST_URL CLAVE

@@ -1,6 +1,6 @@
 # Página personal y blog — Arnulfo Reyes
 
-Sitio estático personal con blog en Markdown. Sin build tools, sin frameworks, sin backend: **HTML, CSS y JavaScript** servidos tal cual.
+Sitio estático personal con blog en Markdown. Sin build tools ni frameworks: **HTML, CSS y JavaScript** servidos tal cual. La única excepción es `/garage164/`, que usa una Netlify Function pequeña para poder editarse en vivo — ver la [sección 9](#9-zona-privada-garage-164).
 
 - Autor: Arnulfo Reyes
 - Repositorio: <https://github.com/yosef7/personal-page-1>
@@ -16,7 +16,7 @@ Sitio estático personal con blog en Markdown. Sin build tools, sin frameworks, 
 | Sobre mí | `about.html` | Biografía y trayectoria |
 | Blog | `blog.html` | Listado de publicaciones (se genera desde `posts/posts.json`) |
 | Publicación | `post.html?p=<slug>` | Renderiza `posts/<slug>.md` en el navegador |
-| Garage 164 | `garage164/` | Zona privada cifrada, sin enlaces desde el sitio ([detalles](garage164/README.md)) |
+| Garage 164 | `garage164/` | Zona privada cifrada y editable en vivo, sin enlaces desde el sitio ([detalles](garage164/README.md)) |
 
 El blog **no se compila**: `post.html` es una sola plantilla que lee el slug de la URL, busca los metadatos en `posts/posts.json` y descarga el Markdown con `fetch`.
 
@@ -51,7 +51,9 @@ Todo se carga desde CDN, no hay `package.json` ni dependencias instaladas:
 ├── assets/
 │   ├── img/              # Imágenes de portada y de posts
 │   └── *.ico             # Favicons
-├── garage164/            # Zona privada cifrada (ver su propio README)
+├── garage164/            # Zona privada cifrada, editable en vivo (ver su propio README)
+├── netlify/functions/
+│   └── vault.mjs         # Lee/guarda el vault de Garage 164 en Netlify Blobs
 ├── robots.txt            # Bloquea /garage164/ a los buscadores
 └── _headers              # Cabeceras noindex/no-store para /garage164/*
 ```
@@ -59,7 +61,7 @@ Todo se carga desde CDN, no hay `package.json` ni dependencias instaladas:
 ## 4. Requisitos
 
 - **Python 3** (para el servidor local) — viene preinstalado en macOS.
-- **Node.js** — solo si vas a cifrar el vault de `garage164/`.
+- **Node.js** — solo si vas a publicar la colección de `garage164/` desde la terminal.
 - Un navegador moderno y conexión a internet (las librerías vienen de CDN).
 
 No hay `npm install`. No hay paso de compilación.
@@ -75,6 +77,8 @@ python3 -m http.server 8001
 Abre <http://127.0.0.1:8001/>.
 
 > **Importante:** no valides el blog abriendo los `.html` con doble clic (`file://`). `blog.js` y `post.js` usan `fetch`, que el navegador bloquea en el protocolo de archivos. Siempre por HTTP.
+>
+> **Garage 164 es la excepción:** su lectura y escritura dependen de la Netlify Function (`/garage164/api/vault`), que `python3 -m http.server` no puede servir. En local, la pantalla de acceso carga pero no hay forma de abrir la colección; para probar cambios de `index.html`/`app.js`/`styles.css` de esa sección, hazlo contra el sitio ya desplegado.
 
 URLs útiles mientras trabajas:
 
@@ -181,9 +185,9 @@ def hola():
 
 ## 9. Zona privada: Garage 164
 
-`garage164/` es una sección estática protegida por contraseña: los datos se publican cifrados con AES-256-GCM (`vault.enc.json`) y se descifran en el navegador. `robots.txt` y `_headers` la excluyen de los buscadores, pero **no hay control de acceso en el servidor**: la URL es alcanzable, lo que protege es el cifrado.
+`garage164/` es una sección protegida por contraseña y editable en vivo: los datos se guardan cifrados con AES-256-GCM y se descifran en el navegador; una Netlify Function (`netlify/functions/vault.mjs`) los guarda en Netlify Blobs en vez de en un archivo estático, así que agregar o editar un carrito desde la página queda visible al instante, sin `git push`. La Function nunca conoce la contraseña ni puede descifrar nada — solo verifica una credencial derivada de ella antes de aceptar una escritura. `robots.txt` y `_headers` excluyen la ruta de los buscadores, pero **no hay control de acceso a nivel de página**: la URL es alcanzable, lo que protege es el cifrado.
 
-El archivo en claro `garage164/data.json` está en `.gitignore` y nunca debe publicarse. El procedimiento completo de cifrado y actualización está en [garage164/README.md](garage164/README.md).
+El archivo en claro `garage164/data.json` está en `.gitignore` y nunca debe publicarse. El procedimiento completo de configuración, publicación y el detalle de la Function están en [garage164/README.md](garage164/README.md).
 
 ## 10. Despliegue
 
@@ -192,7 +196,9 @@ El sitio está alojado en **Netlify**, en <https://www.arnulforeyes.com/>, y se 
 Como no hay compilación, el despliegue consiste en copiar la raíz del repositorio: tarda menos de un minuto.
 
 - `_headers` aplica cabeceras `noindex` y `no-store` a `/garage164/*`. Es el formato nativo de Netlify, así que funciona sin configuración adicional.
-- No se requiere paso de build ni comando de instalación.
+- `netlify/functions/vault.mjs` se detecta y despliega automáticamente por estar en `netlify/functions/` — no requiere `netlify.toml` ni build.
+- Esa función depende de la variable de entorno `GARAGE164_WRITE_HASH` (Site settings → Environment variables). Sin ella, la lectura de Garage 164 funciona pero cualquier intento de guardar falla con 403. Ver [garage164/README.md](garage164/README.md#4-configuración-inicial-paso-a-paso).
+- No se requiere paso de build ni comando de instalación para el resto del sitio.
 - Antes de desplegar, confirma que `posts/posts.json` sea JSON válido y que `garage164/data.json` no esté siendo subido.
 
 ## 11. Problemas frecuentes

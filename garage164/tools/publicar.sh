@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 #
-# Cifra garage164/data.json y prepara la publicación de Garage 164.
+# Cifra garage164/data.json y lo publica directamente en la colección en
+# vivo (Netlify Function + Blobs). No requiere git push ni esperar un deploy.
 #
 #   Uso:  ./garage164/tools/publicar.sh
+#
+# Pensado para reemplazar la colección completa (alta inicial o una limpieza
+# grande). Para agregar un carrito suelto es más simple hacerlo directo en la
+# página, ya desbloqueada con la contraseña.
 #
 # La contraseña se pide en pantalla, nunca se escribe en el comando ni queda
 # en el historial de la terminal.
@@ -13,7 +18,6 @@ RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$RAIZ"
 
 DATOS="garage164/data.json"
-VAULT="garage164/vault.enc.json"
 
 rojo()  { printf '\033[31m%s\033[0m\n' "$1"; }
 verde() { printf '\033[32m%s\033[0m\n' "$1"; }
@@ -44,7 +48,7 @@ if ! python3 -c "import json,sys; json.load(open('$DATOS'))" 2>/dev/null; then
   exit 1
 fi
 
-# --- 2. Resumen de lo que se va a cifrar ---------------------------------
+# --- 2. Resumen de lo que se va a publicar --------------------------------
 
 python3 - "$DATOS" <<'PY'
 import json, sys
@@ -58,6 +62,14 @@ print(f"  Modelos    : {len(cars)}")
 print(f"  Unidades   : {total}")
 print(f"  Por conseguir: {len(wish)}\n")
 PY
+
+echo "Esto REEMPLAZA por completo la colección publicada (incluye lo que se haya"
+echo "agregado desde la página desde la última vez que corriste este script)."
+read -rp "¿Continuar? (s/N): " CONFIRMA
+if [ "${CONFIRMA:-n}" != "s" ] && [ "${CONFIRMA:-n}" != "S" ]; then
+  gris "Cancelado."
+  exit 0
+fi
 
 # --- 3. Contraseña --------------------------------------------------------
 
@@ -74,35 +86,8 @@ if [ "${#PASS1}" -lt 14 ]; then
   exit 1
 fi
 
-# --- 4. Cifrado -----------------------------------------------------------
+# --- 4. Cifrar y publicar ---------------------------------------------------
 
 export GARAGE164_PASSWORD="$PASS1"
-node garage164/tools/encrypt-vault.mjs "$DATOS" "$VAULT"
+node garage164/tools/publish-vault.mjs "$DATOS"
 unset GARAGE164_PASSWORD PASS1 PASS2
-
-# --- 5. Verificación de seguridad antes de publicar ----------------------
-
-if git status --porcelain --untracked-files=all garage164/ | grep -q "data\.json"; then
-  rojo "PELIGRO: $DATOS aparecería en el commit. No se publica nada."
-  exit 1
-fi
-
-verde "Vault cifrado correctamente."
-gris "Pruébalo antes de publicar:"
-gris "  python3 -m http.server 8001 --bind 127.0.0.1"
-gris "  http://127.0.0.1:8001/garage164/"
-echo
-
-# --- 6. Publicación opcional ---------------------------------------------
-
-read -rp "¿Publicar ahora en el sitio? (s/N): " RESP
-if [ "${RESP:-n}" != "s" ] && [ "${RESP:-n}" != "S" ]; then
-  gris "No se publicó. Cuando quieras hacerlo:"
-  gris "  git add $VAULT && git commit -m 'chore(garage164): actualiza la colección' && git push"
-  exit 0
-fi
-
-git add "$VAULT"
-git commit -m "chore(garage164): actualiza la colección"
-git push
-verde "Publicado. Netlify despliega en menos de un minuto."

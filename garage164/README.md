@@ -1,266 +1,197 @@
-# Garage 164 — versión estática privada
+# Garage 164 — colección privada, editable en vivo
 
 Catálogo privado de la colección de carritos, publicado en `/garage164/` dentro del sitio estático. No hay enlaces hacia esta ruta desde ninguna página pública.
 
-Los datos se publican **cifrados**. Quien abra la dirección solo ve una pantalla que pide contraseña; el contenido real se descifra dentro del navegador y nunca viaja en claro ni queda guardado en el repositorio.
+Los datos se guardan **cifrados**. Quien abra la dirección solo ve una pantalla que pide contraseña; el contenido real se descifra dentro del navegador y nunca viaja en claro ni queda guardado sin cifrar en ningún servidor. Se puede agregar, editar o eliminar carritos y piezas de la lista de deseos directamente desde la página — el cambio queda visible al instante para quien la abra después, sin pasar por `git push` ni esperar un deploy.
 
 ---
 
 ## 1. Cómo funciona, en palabras simples
 
-El sitio es estático: no hay servidor que valide usuarios ni base de datos donde consultar. Todo lo que se publica queda en archivos que cualquiera podría descargar. La solución es que **el archivo publicado sea ilegible sin la contraseña**.
-
-El flujo completo son tres momentos:
+El sitio en general es estático (HTML/CSS/JS servidos tal cual). Garage 164 es la excepción: tiene una pequeña pieza de servidor —una **Netlify Function**— que guarda el archivo cifrado en un almacén llamado **Netlify Blobs**. Esa pieza nunca ve la contraseña ni puede leer la colección: solo entrega y guarda bytes cifrados, igual que antes hacía un archivo estático.
 
 ```
-  data.json                 vault.enc.json                Navegador
- (texto legible)   ──►      (texto cifrado)      ──►     (vuelve a ser
-  solo en tu PC             se publica en la web          legible en pantalla)
-                  cifras con              descifras con
-                  la contraseña           la misma contraseña
+  Navegador                    Netlify Function              Netlify Blobs
+  ─────────                    ────────────────              ─────────────
+  contraseña ──► descifra ◄──── GET  /garage164/api/vault ◄────  vault cifrado
+                                                                  (ilegible para
+  editas, agregas,                                                Netlify)
+  cifras de nuevo ──────────► PUT  /garage164/api/vault ─────►
+                               (solo si el token de escritura
+                                es válido)
 ```
 
-1. **Escribes** tu colección en `data.json`, un archivo normal de texto que vive **solo en tu computadora**.
-2. **Ciframos** ese archivo con un comando, que produce `vault.enc.json`. Ese sí se publica.
-3. **Abres la página** e ingresas la contraseña: el navegador descifra `vault.enc.json` en memoria y muestra la colección.
+1. **Abres la página** e ingresas la contraseña compartida. El navegador pide el vault a la Function, lo descifra en memoria y muestra la colección.
+2. **Agregas o editas** un carrito desde la propia página. El navegador arma la colección actualizada, la cifra de nuevo (con una sal e IV nuevos) y se la manda a la Function.
+3. **La Function verifica** que quien escribe conoce la contraseña —sin necesitar saberla ella misma— y guarda el resultado en Blobs.
+4. **Cualquiera que abra la página después** ve el cambio de inmediato, porque ya no lee un archivo fijo: le pregunta a la Function en cada carga.
 
-La contraseña nunca se guarda: ni en el repositorio, ni en el archivo cifrado, ni se envía a ningún servidor. Existe únicamente en la cabeza de quienes la comparten y en el momento en que la escriben.
+La contraseña nunca se envía a ningún servidor. Lo único que sale del navegador al guardar es un **token de escritura** derivado de ella —explicado en la [sección 8](#8-qué-protege-esto-y-qué-no)— que sirve para autorizar, no para descifrar.
 
-**Detalle técnico**, para quien lo quiera: la contraseña pasa por PBKDF2-SHA-256 con 600 000 iteraciones para derivar una llave, y con ella se cifra el contenido usando AES-256-GCM. Cada vez que ciframos se generan un `salt` y un `iv` nuevos y aleatorios. Sin la contraseña correcta, el descifrado simplemente falla; no hay forma de leer una parte.
+**Detalle técnico**, para quien lo quiera: la contraseña pasa por PBKDF2-SHA-256 con 600 000 iteraciones para derivar la llave de cifrado, y el contenido se cifra con AES-256-GCM. Cada guardado genera una sal y un IV nuevos y aleatorios.
 
 ## 2. Qué hay en esta carpeta
 
 | Archivo | ¿Se publica? | Para qué sirve |
 | --- | --- | --- |
-| `index.html` | Sí | La página: pantalla de contraseña + vista de la colección |
+| `index.html` | Sí | La página: acceso, catálogo, formularios de alta/edición |
 | `styles.css` | Sí | Estilos (tema oscuro) |
-| `app.js` | Sí | Descifra en el navegador y dibuja las tarjetas |
-| `vault.enc.json` | **Sí** | Tu colección, cifrada. Es el único archivo de datos que se sube |
+| `app.js` | Sí | Descifra, cifra y llama a la Function desde el navegador |
 | `data.example.json` | Sí | Plantilla de ejemplo, con datos inventados |
 | `data.json` | **No, nunca** | Tu colección en texto legible. Está en `.gitignore` |
-| `tools/encrypt-vault.mjs` | Sí | El comando que convierte `data.json` en `vault.enc.json` |
-| `tools/publicar.sh` | Sí | Atajo que cifra, verifica y publica en un solo paso |
+| `tools/publish-vault.mjs` | Sí | Cifra `data.json` y lo publica de un golpe (reemplaza toda la colección) |
+| `tools/publicar.sh` | Sí | Envoltorio de lo anterior: valida, resume y confirma antes de publicar |
+| `tools/generar-hash-escritura.sh` | Sí | Calcula el valor que se configura una vez en Netlify para autorizar escrituras |
+| `tools/probar-clave.sh` | Sí | Diagnostica si una contraseña abre la colección publicada |
+| `../netlify/functions/vault.mjs` | Sí | La Function: entrega y guarda el vault en Netlify Blobs |
 
-La regla que evita accidentes es una sola: **`data.json` se queda en tu computadora, `vault.enc.json` es lo que se publica.**
+Ya no hay un archivo `vault.enc.json` en el repositorio — la colección vive en Netlify Blobs, no en git. La regla que evita accidentes sigue siendo una sola: **`data.json` se queda en tu computadora; lo que sale de aquí siempre pasa por el cifrado primero.**
 
 ## 3. Requisitos
 
-- **Node.js** — solo para el paso de cifrado.
+- **Node.js** — para cifrar y publicar desde la terminal.
 - **Python 3** — para levantar el servidor local de prueba (viene con macOS).
-- Una contraseña compartida de **14 caracteres como mínimo**. La herramienta rechaza cualquier cosa más corta.
+- Acceso al panel de Netlify del sitio (`app.netlify.com`) — para configurar la variable de entorno una sola vez.
+- Una contraseña compartida de **14 caracteres como mínimo**.
 
 ## 4. Configuración inicial, paso a paso
 
-> Estos comandos se ejecutan desde la **raíz del repositorio**, no desde dentro de `garage164/`.
+> Estos comandos se ejecutan desde la **raíz del repositorio**.
 
-> **Atajo:** una vez creado tu `data.json` (Paso 1), el script `./garage164/tools/publicar.sh` hace los pasos 2, 4 y 5 por ti. Los pasos de abajo explican qué ocurre por dentro; vale la pena leerlos una vez.
+### Paso 1 — Elige la contraseña y autoriza la escritura
 
-### Paso 1 — Crea tu archivo de datos
+Este paso se hace **una sola vez** (o cada vez que cambien la contraseña). Calcula el valor que autoriza a esa contraseña a guardar cambios:
 
-Copia la plantilla de ejemplo:
+```zsh
+./garage164/tools/generar-hash-escritura.sh
+```
+
+Te va a pedir la contraseña y te va a imprimir un valor largo en hexadecimal. Ve al panel de Netlify del sitio:
+
+**Site settings → Environment variables → Add a variable**
+
+- Key: `GARAGE164_WRITE_HASH`
+- Value: el valor que imprimió el script
+
+Guarda, y dispara un nuevo deploy (**Deploys → Trigger deploy**) para que la Function la vea — las variables de entorno nuevas no llegan a una función ya desplegada hasta el siguiente deploy.
+
+Guarda también la contraseña en tu gestor de contraseñas ahora, antes de seguir.
+
+### Paso 2 — Crea tu archivo de datos
 
 ```zsh
 cp garage164/data.example.json garage164/data.json
 ```
 
-Ahora abre `garage164/data.json` y reemplaza el contenido de ejemplo por tus carritos reales. El formato de cada campo está explicado en la [sección 7](#7-formato-de-los-datos).
+Abre `garage164/data.json` y reemplaza el contenido de ejemplo por tu colección real. El formato de cada campo está en la [sección 7](#7-formato-de-los-datos).
 
-### Paso 2 — Cifra el archivo
-
-Este bloque hace tres cosas: pide la contraseña sin mostrarla en pantalla, ejecuta el cifrado, y borra la contraseña de la sesión.
-
-```zsh
-read -s 'GARAGE164_PASSWORD?Contraseña de Garage 164: '; echo
-export GARAGE164_PASSWORD
-node garage164/tools/encrypt-vault.mjs garage164/data.json garage164/vault.enc.json
-unset GARAGE164_PASSWORD
-```
-
-Si sale bien verás:
-
-```
-Archivo cifrado creado: garage164/vault.enc.json
-```
-
-**¿Por qué así y no escribiendo la contraseña en el comando?** Porque `read -s` no la muestra al teclearla y no la deja registrada en el historial de la terminal (`~/.zsh_history`). Si la pusieras directamente en la línea del comando, quedaría guardada en texto plano y visible para cualquiera que revise el historial.
-
-### Paso 3 — Pruébalo en local
-
-Levanta el servidor desde la raíz del repositorio:
-
-```zsh
-python3 -m http.server 8001 --bind 127.0.0.1
-```
-
-Abre <http://127.0.0.1:8001/garage164/> y prueba la contraseña.
-
-> **No abras `index.html` con doble clic.** La página descarga `vault.enc.json` con `fetch`, y el navegador bloquea esa operación cuando el archivo se abre desde el disco (`file://`). Tiene que ser por HTTP.
-
-Comprueba dos cosas: que la contraseña correcta abre la colección, y que una incorrecta muestra “La contraseña no es correcta”.
-
-### Paso 4 — Verifica antes de publicar
-
-```zsh
-git status --short garage164/
-```
-
-Debe aparecer `garage164/vault.enc.json`. **No debe aparecer `garage164/data.json`** — está en `.gitignore`, así que si lo ves, algo se configuró mal y hay que detenerse antes de subir nada.
-
-### Paso 5 — Publica
-
-```zsh
-git add garage164/vault.enc.json
-git commit -m "chore(garage164): actualiza la colección"
-git push
-```
-
-## 5. Cómo se usa la página
-
-1. Entra a la dirección y escribe la contraseña compartida. El botón **Mostrar** permite verla mientras la escribes, por si el teclado del móvil complica las cosas.
-2. Al abrir, arriba aparece un resumen con cuatro números:
-   - **modelos** — cuántos modelos distintos hay (los repetidos cuentan como uno)
-   - **carritos** — el total de unidades, sumando las cantidades
-   - **duplicados** — cuántas unidades sobran de modelos repetidos
-   - **por conseguir** — cuántas piezas hay en la lista de deseos
-3. El buscador filtra por modelo, marca, serie, color o ubicación. **Ignora acentos y mayúsculas**: escribir `naranja` encuentra `Naranja`.
-4. El botón **Cerrar** recarga la página y vuelve a la pantalla de contraseña. Úsalo si prestas el teléfono o dejas la computadora abierta.
-
-La lista de deseos aparece automáticamente solo si tiene elementos.
-
-## 6. Actualizar la colección
-
-Cada vez que agregues o cambies carritos son dos cosas: editar y publicar.
-
-**1. Edita `garage164/data.json`.** Agrega el carrito nuevo o corrige lo que haga falta, y actualiza el campo `updatedAt` con la fecha del día en formato `AAAA-MM-DD`. Es lo que la página muestra como “Actualizado el …”.
-
-**2. Ejecuta el script de publicación.**
+### Paso 3 — Publica por primera vez
 
 ```zsh
 ./garage164/tools/publicar.sh
 ```
 
-El script se encarga de todo lo demás: valida que el JSON no tenga errores, te muestra un resumen de lo que vas a publicar, pide la contraseña dos veces para evitar erratas, cifra, **comprueba que `data.json` no vaya a colarse en el commit** y te ofrece publicar.
+Pide la contraseña (dos veces, para evitar erratas), cifra `data.json` y lo publica directo en la colección en vivo — sin `git push`. Como es la primera vez, no hay nada que sobrescribir.
 
-Si prefieres hacerlo a mano, los comandos del Paso 2 de la sección anterior siguen funcionando igual.
+### Paso 4 — Verifica
 
-Puedes usar la misma contraseña de siempre o cambiarla; si la cambias, todo el que use la página necesitará la nueva.
+Abre <https://www.arnulforeyes.com/garage164/>, ingresa la contraseña y confirma que tu colección aparece.
 
-Como no hay base de datos, **`data.json` es la única fuente real de la colección**. Consérvalo: si lo pierdes, el archivo cifrado no se puede volver a editar, solo leer. Guarda una copia en un lugar seguro (un respaldo cifrado o un gestor de contraseñas con notas), nunca en el repositorio.
+## 5. Cómo se usa la página
 
-Y ojo con el punto de sincronización: si dos personas editan su propia copia de `data.json` por separado, el último que cifre y publique **sobrescribe** el trabajo del otro. Conviene acordar quién edita antes de hacerlo.
+1. Entra a la dirección y escribe la contraseña compartida. El botón **Mostrar** permite verla mientras la escribes.
+2. Arriba aparece un resumen: **modelos**, **carritos**, **duplicados** y **por conseguir**.
+3. El buscador filtra por modelo, marca, serie, color o ubicación, ignorando acentos y mayúsculas.
+4. **+ Agregar carrito** abre un formulario para sumar una pieza nueva a la colección. Solo el modelo es obligatorio.
+5. **+ Agregar a la lista de deseos** hace lo mismo para algo que todavía no tienes.
+6. Cada tarjeta tiene **Editar** (carga sus datos en el formulario para corregirlos) y **Eliminar** (pide confirmación antes de quitarla).
+7. Cualquier alta, edición o borrado se guarda al instante — no hace falta ningún paso adicional, y el cambio ya es visible para quien abra la página después, incluso desde otro teléfono.
+8. **Cerrar** recarga la página y vuelve a la pantalla de contraseña. Úsalo si prestas el teléfono o dejas la computadora abierta — la contraseña solo vive en la memoria de esa pestaña mientras está abierta.
+
+## 6. Cuándo usar el formulario y cuándo `publicar.sh`
+
+| Situación | Qué usar |
+| --- | --- |
+| Compraste un carrito, quieres agregarlo ya | El formulario **+ Agregar carrito**, en la página |
+| Corregir un dato de una pieza | **Editar** en su tarjeta |
+| Ya no la tienes / te equivocaste al cargarla | **Eliminar** en su tarjeta |
+| Vas a reconstruir la colección completa desde cero, o hacer una limpieza grande editando muchas piezas a la vez | Editar `garage164/data.json` y correr `publicar.sh` |
+| Cambiaste la contraseña | `generar-hash-escritura.sh` (nueva variable en Netlify) y luego `publicar.sh` con la contraseña nueva |
+
+`publicar.sh` **reemplaza toda la colección** por el contenido de `data.json` — incluido cualquier cambio que se haya hecho desde la página desde la última vez que lo corriste. Si Michel agregó algo hoy y tú corres `publicar.sh` con un `data.json` de la semana pasada, ese carrito nuevo se pierde. Para altas sueltas, siempre es más seguro usar el formulario de la página.
 
 ## 7. Formato de los datos
 
-El archivo tiene dos campos generales y dos listas:
+Sin cambios respecto a antes — el mismo objeto, ya sea que lo edites en `data.json` o lo generen los formularios de la página:
 
 ```json
 {
   "collectionName": "Garage 164",
-  "updatedAt": "2026-08-23",
+  "updatedAt": "2026-08-24",
   "cars": [ ... ],
   "wishlist": [ ... ]
 }
 ```
 
-| Campo general | Qué hace |
-| --- | --- |
-| `collectionName` | El título que se ve arriba. Si falta, dice “Garage 164” |
-| `updatedAt` | Fecha `AAAA-MM-DD`; se muestra en formato largo, por ejemplo “23 de agosto de 2026” |
-
 ### Cada carrito, dentro de `cars`
-
-```json
-{
-  "model": "Twin Mill",
-  "brand": "Hot Wheels",
-  "series": "HW Originals",
-  "year": 2023,
-  "color": "Naranja",
-  "package": "Sellado",
-  "location": "Vitrina",
-  "quantity": 1,
-  "notes": ""
-}
-```
 
 | Campo | Obligatorio | Notas |
 | --- | --- | --- |
-| `model` | Sí | El nombre grande de la tarjeta. También es lo que agrupa duplicados |
-| `brand` | No | Se muestra arriba del modelo. Si falta, se asume “Hot Wheels” |
-| `series` | No | Aparece como etiqueta |
-| `year` | No | Aparece como etiqueta |
-| `color` | No | Aparece como etiqueta |
-| `package` | No | Estado del empaque: `Sellado`, `Abierto`, `Suelto`… Aparece como etiqueta |
-| `location` | No | Dónde está guardado: `Vitrina`, `Caja 2`… Aparece como etiqueta |
-| `quantity` | No | Cuántas unidades tienes de ese modelo. Si falta, se cuenta como 1 |
-| `notes` | No | Texto libre bajo el título. Si va vacío, no se muestra |
-
-Los campos vacíos simplemente no aparecen en la tarjeta, así que puedes dejar en blanco los que no apliquen.
-
-**Sobre los duplicados:** el conteo agrupa por `model`, ignorando mayúsculas y acentos. Si tienes dos entradas del mismo modelo, o una entrada con `"quantity": 2`, en ambos casos cuenta como 1 modelo y 1 duplicado.
+| `model` | Sí | El nombre grande de la tarjeta. También agrupa los duplicados |
+| `brand` | No | Si falta, se asume “Hot Wheels” |
+| `series`, `year`, `color`, `package`, `location` | No | Aparecen como etiquetas |
+| `quantity` | No | Si falta, cuenta como 1 |
+| `notes` | No | Texto libre bajo el título |
 
 ### Cada pieza deseada, dentro de `wishlist`
-
-```json
-{
-  "model": "Toyota Supra MK4",
-  "series": "Fast & Furious",
-  "year": 2024,
-  "color": "Naranja",
-  "priority": "alta",
-  "where": "",
-  "notes": ""
-}
-```
 
 | Campo | Obligatorio | Notas |
 | --- | --- | --- |
 | `model` | Sí | El nombre de la pieza |
-| `priority` | No | `alta`, `media` o `baja`. Cambia el color de la etiqueta. Si falta, es `media` |
-| `series`, `year`, `color`, `where` | No | Se muestran juntos en una línea, separados por `·` |
-| `where` | No | Dónde conseguirla: una tienda, un vendedor, un sitio |
+| `priority` | No | `alta`, `media` o `baja`. Si falta, es `media` |
+| `series`, `year`, `color`, `where` | No | Se muestran juntos, separados por `·` |
 | `notes` | No | Texto libre |
 
-Si `wishlist` está vacía, la sección completa desaparece de la página.
+Los campos vacíos simplemente no aparecen en la tarjeta.
 
 ## 8. Qué protege esto y qué no
 
-**Lo que sí protege.** El contenido de la colección. Aunque alguien descargue `vault.enc.json`, sin la contraseña solo obtiene ruido: el cifrado es AES-256-GCM con una llave derivada mediante 600 000 iteraciones, lo que hace que probar contraseñas a la fuerza sea lentísimo.
+**Lo que sí protege.** El contenido de la colección, igual que antes: AES-256-GCM con una llave derivada por PBKDF2 (600 000 iteraciones). Aunque alguien acceda al almacén de Blobs, sin la contraseña solo obtiene ruido.
 
-**Lo que no protege.** La existencia de la página. Al ser hosting estático **no hay control de acceso en el servidor**: cualquiera que conozca la dirección puede abrirla y ver la pantalla de contraseña. Eso es aceptable, porque lo que resguarda los datos es el cifrado, no la ruta secreta.
+**Quién puede escribir.** Esta es la pieza nueva. De la contraseña se derivan **dos valores distintos e independientes**, con propósitos que no se cruzan:
 
-Medidas complementarias que ya están puestas:
+```
+   contraseña
+       │
+       ├── deriva (PBKDF2, sal del vault) ──► llave de cifrado     (nunca sale del navegador)
+       │
+       └── deriva (PBKDF2, sal fija "garage164-write-token-v1")
+                       │
+                       ▼
+                token de escritura ──se envía──► la Function compara su
+                                                   hash contra GARAGE164_WRITE_HASH
+```
 
-- `robots.txt` en la raíz del sitio bloquea `/garage164/` a los buscadores.
-- El archivo `_headers` envía `X-Robots-Tag: noindex, nofollow, noarchive, nosnippet` y `Cache-Control: no-store` para esta ruta. Es el formato nativo de Netlify, donde está alojado el sitio, así que se aplica automáticamente en cada despliegue.
-- La página declara `referrer: no-referrer`, para que al salir hacia otro sitio no se filtre la dirección de origen.
+Al guardar, el navegador manda el token de escritura; la Function calcula su hash y lo compara contra el que guardaste en la variable de entorno. Coincide → acepta el cambio. No coincide → lo rechaza con 403. **La Function sigue sin poder descifrar nada** ni conoce la contraseña — solo verifica una credencial derivada de ella.
 
-**Reglas prácticas que hay que sostener:**
+**Dos ediciones a la vez.** Cada lectura trae una versión (`ETag`). Al guardar, el navegador manda la versión que leyó; si alguien más guardó un cambio mientras tanto, la Function lo rechaza con 409 y la página recarga la versión más reciente en vez de pisarla en silencio.
+
+**Lo que no protege.** La existencia de la página: al ser hosting mayormente estático, cualquiera que conozca la dirección puede abrir la pantalla de contraseña. Eso es aceptable porque lo que resguarda los datos es el cifrado, no la ruta secreta. `robots.txt` y las cabeceras de `_headers` la mantienen fuera de buscadores, pero no son control de acceso.
+
+**Reglas prácticas:**
 
 - Mantengan la URL y la contraseña fuera de publicaciones, redes y chats de grupo.
-- La fortaleza de todo esto es la contraseña. Una larga y poco predecible; nada de fechas ni nombres obvios.
-- Compártanla por un canal privado y directo, nunca junto con el enlace en el mismo mensaje.
-- Si sospechan que se filtró: cambien la contraseña, vuelvan a cifrar y publiquen el nuevo `vault.enc.json`. El archivo anterior deja de servir.
+- La fortaleza de todo esto es la contraseña: larga y poco predecible.
+- Si sospechan que se filtró: elijan una contraseña nueva, repitan el Paso 1 (nuevo `GARAGE164_WRITE_HASH`) y vuelvan a publicar con `publicar.sh`. El token derivado de la contraseña anterior deja de servir en cuanto cambia la variable de entorno.
 
 ## 9. Problemas frecuentes
 
 | Qué ves | Por qué pasa | Qué hacer |
 | --- | --- | --- |
-| “No se encontró el archivo cifrado. Falta completar la configuración inicial.” | `vault.enc.json` no existe todavía, o abriste la página con `file://` | Completa el Paso 2 y sirve el sitio por HTTP |
-| “La contraseña no es correcta.” | Es otra contraseña, o el vault se cifró con una distinta | Verifica cuál se usó al cifrar por última vez |
-| “El formato del archivo cifrado no es compatible.” | El `vault.enc.json` viene de una versión distinta de la herramienta | Vuelve a cifrar con `tools/encrypt-vault.mjs` de este repositorio |
-| “Define GARAGE164_PASSWORD…” al cifrar | La variable no está definida o tiene menos de 14 caracteres | Repite el Paso 2 completo, con una contraseña más larga |
-| La página queda en blanco | JavaScript está desactivado | La página lo necesita para descifrar; actívalo |
+| “No se encontró el archivo cifrado. Falta completar la configuración inicial.” | Todavía no corriste `publicar.sh` por primera vez | Completa el Paso 3 de la configuración inicial |
+| “La contraseña no es correcta.” | Es otra contraseña, o la colección se cifró con una distinta | Verifica cuál se usó en el último `publicar.sh` |
+| Al guardar desde el formulario: “No fue posible guardar: credencial de escritura no válida” | `GARAGE164_WRITE_HASH` no está configurada, no coincide con la contraseña, o falta redesplegar tras crearla | Repite el Paso 1; recuerda disparar un deploy nuevo después de guardar la variable |
+| “Alguien más actualizó la colección. Recargando…” | Dos personas guardaron casi al mismo tiempo | Normal — la página ya recargó la versión más reciente; repite tu cambio si hacía falta |
+| `publish-vault.mjs` dice “Conflicto” | Lo mismo, desde la terminal | Vuelve a correr `publicar.sh` |
+| La página queda en blanco | JavaScript está desactivado | La página lo necesita para cifrar y descifrar; actívalo |
 | Ves `garage164/data.json` en `git status` | El `.gitignore` no se está aplicando | **No hagas commit.** Revisa `.gitignore` antes de continuar |
-
----
-
-## Estado actual
-
-`data.json` ya está creado a partir de la plantilla, con los datos de ejemplo todavía dentro. Falta lo que solo tú puedes hacer:
-
-1. Reemplazar el contenido de `garage164/data.json` por tu colección real.
-2. Elegir la contraseña compartida, guardarla en un gestor y acordarla con Michel.
-3. Ejecutar `./garage164/tools/publicar.sh` para generar y publicar el vault.
-
-Mientras `vault.enc.json` no exista, la página abre pero responde que falta completar la configuración.
