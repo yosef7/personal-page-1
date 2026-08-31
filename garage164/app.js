@@ -494,6 +494,104 @@ function closeWorkspace(view) {
   showView(view || editor.returnTo || 'dashboard')
 }
 
+// --- Catálogos de los campos con lista --------------------------------------
+
+// Todos los campos con lista son de escritura libre (input + datalist): la
+// lista ahorra tecleo en el caso normal, pero una pieza rara siempre se puede
+// anotar a mano, y un registro viejo nunca se queda sin su valor al editarlo.
+
+const ANIO_INICIAL = 1968 // primer año de Hot Wheels
+
+// Totales habituales de una línea. El total manda: al elegirlo, la lista del
+// número se regenera de 1 a ese total.
+const LINE_TOTALS = [250, 365, 100, 50, 20, 10, 5]
+const LINE_TOTAL_POR_DEFECTO = 250
+
+// Plantas donde se fabrican (y se fabricaron) los carritos, la más frecuente
+// primero: es la que se escribe casi siempre.
+const COUNTRIES = [
+  'Malasia', 'Tailandia', 'Indonesia', 'China', 'India', 'Vietnam', 'Filipinas',
+  'Hong Kong', 'Estados Unidos', 'México', 'Brasil', 'Francia', 'Venezuela',
+  'Nueva Zelanda', 'Corea del Sur', 'Taiwán', 'España',
+]
+const COUNTRY_POR_DEFECTO = 'Malasia'
+
+// Dónde está físicamente la pieza. La colección vive en Panamá.
+const LOCATIONS = ['Panamá', 'Estados Unidos', 'Colombia', 'Costa Rica', 'México', 'España']
+const LOCATION_POR_DEFECTO = 'Panamá'
+
+const COLORS = [
+  'Rojo', 'Azul', 'Celeste', 'Verde', 'Amarillo', 'Naranja', 'Negro', 'Blanco',
+  'Gris', 'Plata', 'Dorado', 'Cobre', 'Morado', 'Rosa', 'Café', 'Beige',
+  'Turquesa', 'Vino', 'Cromado', 'Transparente', 'Multicolor',
+]
+
+function currentYear() { return new Date().getFullYear() }
+
+// Del año en curso hacia atrás: lo que se registra casi siempre es reciente.
+function yearOptions() {
+  const años = []
+  for (let año = currentYear(); año >= ANIO_INICIAL; año -= 1) años.push(año)
+  return años
+}
+
+function rangeOptions(total) {
+  const numeros = []
+  for (let n = 1; n <= total; n += 1) numeros.push(n)
+  return numeros
+}
+
+// Crea el <datalist> si no existe y le pone estas opciones (reemplazando las
+// anteriores, que es como se refresca la lista del número al cambiar el total).
+function setDatalist(id, values) {
+  const host = document.querySelector('#datalists')
+  let lista = document.querySelector(`#${id}`)
+  if (!lista) {
+    lista = document.createElement('datalist')
+    lista.id = id
+    host.append(lista)
+  }
+  lista.replaceChildren(...values.map((value) => {
+    const option = document.createElement('option')
+    option.value = value
+    return option
+  }))
+}
+
+function buildDatalists() {
+  setDatalist('list-years', yearOptions())
+  setDatalist('list-line-totals', LINE_TOTALS)
+  setDatalist('list-line-values', rangeOptions(LINE_TOTAL_POR_DEFECTO))
+  setDatalist('list-countries', COUNTRIES)
+  setDatalist('list-locations', LOCATIONS)
+  setDatalist('list-colors', COLORS)
+}
+
+// El N.º de línea se guarda como siempre ("64/250"): la partición en dos
+// campos es solo de la pantalla, el dato en el vault no cambia de forma.
+function readLineNumber() {
+  const numero = val('car-line-number-value')
+  const total = val('car-line-number-total')
+  if (!numero) return ''
+  return total ? `${numero}/${total}` : numero
+}
+
+function setLineNumber(lineNumber) {
+  const [numero = '', total = ''] = String(lineNumber ?? '').split('/')
+  setVal('car-line-number-value', numero.trim())
+  setVal('car-line-number-total', total.trim())
+  syncLineValues()
+}
+
+// Ajusta la lista del número al total escrito, para no ofrecer un 300 en una
+// línea de 250. Un total fuera de catálogo deja la lista como está.
+function syncLineValues() {
+  const total = Number(val('car-line-number-total'))
+  if (Number.isInteger(total) && total > 0 && total <= 999) {
+    setDatalist('list-line-values', rangeOptions(total))
+  }
+}
+
 // --- Formularios de alta / edición ------------------------------------------
 
 function val(id) { return document.querySelector(`#${id}`).value.trim() }
@@ -509,7 +607,7 @@ function readCarForm() {
     brand: val('car-brand'),
     series: val('car-series'),
     year: val('car-year'),
-    lineNumber: val('car-line-number'),
+    lineNumber: readLineNumber(),
     subseriesNumber: val('car-subseries-number'),
     toyNumber: code('car-toy-number'),
     dateCode: code('car-date-code'),
@@ -529,7 +627,7 @@ function fillCarForm(car) {
   setVal('car-brand', car.brand)
   setVal('car-series', car.series)
   setVal('car-year', car.year)
-  setVal('car-line-number', car.lineNumber)
+  setLineNumber(car.lineNumber)
   setVal('car-subseries-number', car.subseriesNumber)
   setVal('car-toy-number', car.toyNumber)
   setVal('car-date-code', car.dateCode)
@@ -547,6 +645,12 @@ function resetCarForm() {
   document.querySelector('#car-form').reset()
   setVal('car-edit-index', '')
   setVal('car-added-at', todayISO())
+  // Lo que casi siempre es cierto viene escrito; se sobrescribe si toca.
+  setVal('car-year', currentYear())
+  setVal('car-line-number-total', LINE_TOTAL_POR_DEFECTO)
+  setVal('car-country', COUNTRY_POR_DEFECTO)
+  setVal('car-location', LOCATION_POR_DEFECTO)
+  syncLineValues()
   document.querySelector('#car-form-submit').textContent = 'Registrar carrito'
   document.querySelector('#car-form-message').textContent = ''
 }
@@ -680,6 +784,8 @@ document.querySelector('#search').addEventListener('input', (event) => {
 
 // --- Eventos: formulario de carritos -------------------------------------
 
+document.querySelector('#car-line-number-total').addEventListener('input', syncLineValues)
+
 document.querySelector('#car-form-cancel').addEventListener('click', () => {
   resetCarForm()
   closeWorkspace()
@@ -785,3 +891,7 @@ document.querySelector('#wishlist-grid').addEventListener('click', async (event)
     )
   }
 })
+
+// --- Arranque ----------------------------------------------------------------
+
+buildDatalists()

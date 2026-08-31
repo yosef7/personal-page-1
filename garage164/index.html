@@ -168,13 +168,20 @@
             <label>Modelo <input id="car-model" required /></label>
             <label>Marca <input id="car-brand" placeholder="Hot Wheels" /></label>
             <label>Serie temática <input id="car-series" placeholder="Batman" /></label>
-            <label>Año de la línea <input id="car-year" inputmode="numeric" placeholder="2024" /></label>
+            <label>Año de la línea <input id="car-year" list="list-years" inputmode="numeric" placeholder="2026" /></label>
           </div>
         </fieldset>
         <fieldset class="entry-form__group">
           <legend>Numeración del empaque</legend>
           <div class="entry-form__grid">
-            <label>N.º de línea <input id="car-line-number" placeholder="64/250" /></label>
+            <div class="entry-form__field">
+              <span class="entry-form__field-label">N.º de línea</span>
+              <div class="entry-form__pair">
+                <input id="car-line-number-value" list="list-line-values" inputmode="numeric" placeholder="64" aria-label="Número de la pieza dentro de la línea" />
+                <span class="entry-form__pair-sep">de</span>
+                <input id="car-line-number-total" list="list-line-totals" inputmode="numeric" placeholder="250" aria-label="Total de piezas de la línea" />
+              </div>
+            </div>
             <label>N.º de subserie <input id="car-subseries-number" placeholder="2/5" /></label>
             <label>Toy number <input id="car-toy-number" placeholder="HYX81" autocapitalize="characters" /></label>
             <label>Date code <input id="car-date-code" placeholder="N7C5" autocapitalize="characters" /></label>
@@ -186,10 +193,10 @@
         <fieldset class="entry-form__group">
           <legend>La pieza</legend>
           <div class="entry-form__grid">
-            <label>Color <input id="car-color" /></label>
-            <label>País de fabricación <input id="car-country" placeholder="Malasia" /></label>
+            <label>Color <input id="car-color" list="list-colors" placeholder="Rojo" /></label>
+            <label>País de fabricación <input id="car-country" list="list-countries" placeholder="Malasia" /></label>
             <label>Empaque <select id="car-package"><option value="">Sin especificar</option><option value="blister">Blister sellado</option><option value="blister abierto">Blister abierto</option><option value="suelto">Suelto</option></select></label>
-            <label>Ubicación <input id="car-location" /></label>
+            <label>Ubicación <input id="car-location" list="list-locations" placeholder="Panamá" /></label>
             <label>Fecha de registro <input id="car-added-at" type="date" /></label>
           </div>
           <p class="entry-form__hint">Cada registro es <strong>una pieza física</strong>. Si compras un segundo ejemplar del mismo modelo, regístralo aparte: la página los cuenta como duplicados sola.</p>
@@ -217,6 +224,10 @@
         <p class="form-message" id="wish-form-message" role="alert" aria-live="polite"></p>
       </form>
     </main>
+
+    <!-- Sugerencias de los campos con lista. Las opciones las rellena app.js
+         para tener los catálogos (años, países, colores) en un solo sitio. -->
+    <div id="datalists" hidden></div>
 
     <noscript>Garage 164 necesita JavaScript para descifrar los datos.</noscript>
     <script src="app.js" defer></script>
