@@ -168,7 +168,11 @@
             <label>Modelo <input id="car-model" required /></label>
             <label>Marca <input id="car-brand" placeholder="Hot Wheels" /></label>
             <label>Serie temática <input id="car-series" placeholder="Batman" /></label>
-            <label>Año de la línea <input id="car-year" list="list-years" inputmode="numeric" placeholder="2026" /></label>
+            <div class="entry-form__field">
+              <span class="entry-form__field-label">Año de la línea</span>
+              <select id="car-year" aria-label="Año de la línea"></select>
+              <input id="car-year-other" class="entry-form__other" hidden placeholder="Escribe el año" aria-label="Otro año de la línea" />
+            </div>
           </div>
         </fieldset>
         <fieldset class="entry-form__group">
@@ -177,10 +181,12 @@
             <div class="entry-form__field">
               <span class="entry-form__field-label">N.º de línea</span>
               <div class="entry-form__pair">
-                <input id="car-line-number-value" list="list-line-values" inputmode="numeric" placeholder="64" aria-label="Número de la pieza dentro de la línea" />
+                <select id="car-line-number-value" aria-label="Número de la pieza dentro de la línea"></select>
                 <span class="entry-form__pair-sep">de</span>
-                <input id="car-line-number-total" list="list-line-totals" inputmode="numeric" placeholder="250" aria-label="Total de piezas de la línea" />
+                <select id="car-line-number-total" aria-label="Total de piezas de la línea"></select>
               </div>
+              <input id="car-line-number-value-other" class="entry-form__other" hidden inputmode="numeric" placeholder="N.º de la pieza" aria-label="Otro número de la pieza" />
+              <input id="car-line-number-total-other" class="entry-form__other" hidden inputmode="numeric" placeholder="Total de la línea" aria-label="Otro total de la línea" />
             </div>
             <label>N.º de subserie <input id="car-subseries-number" placeholder="2/5" /></label>
             <label>Toy number <input id="car-toy-number" placeholder="HYX81" autocapitalize="characters" /></label>
@@ -193,10 +199,22 @@
         <fieldset class="entry-form__group">
           <legend>La pieza</legend>
           <div class="entry-form__grid">
-            <label>Color <input id="car-color" list="list-colors" placeholder="Rojo" /></label>
-            <label>País de fabricación <input id="car-country" list="list-countries" placeholder="Malasia" /></label>
+            <div class="entry-form__field">
+              <span class="entry-form__field-label">Color</span>
+              <select id="car-color" aria-label="Color"></select>
+              <input id="car-color-other" class="entry-form__other" hidden placeholder="Escribe el color" aria-label="Otro color" />
+            </div>
+            <div class="entry-form__field">
+              <span class="entry-form__field-label">País de fabricación</span>
+              <select id="car-country" aria-label="País de fabricación"></select>
+              <input id="car-country-other" class="entry-form__other" hidden placeholder="Escribe el país" aria-label="Otro país de fabricación" />
+            </div>
             <label>Empaque <select id="car-package"><option value="">Sin especificar</option><option value="blister">Blister sellado</option><option value="blister abierto">Blister abierto</option><option value="suelto">Suelto</option></select></label>
-            <label>Ubicación <input id="car-location" list="list-locations" placeholder="Panamá" /></label>
+            <div class="entry-form__field">
+              <span class="entry-form__field-label">Ubicación</span>
+              <select id="car-location" aria-label="Ubicación"></select>
+              <input id="car-location-other" class="entry-form__other" hidden placeholder="Escribe la ubicación" aria-label="Otra ubicación" />
+            </div>
             <label>Fecha de registro <input id="car-added-at" type="date" /></label>
           </div>
           <p class="entry-form__hint">Cada registro es <strong>una pieza física</strong>. Si compras un segundo ejemplar del mismo modelo, regístralo aparte: la página los cuenta como duplicados sola.</p>
@@ -224,10 +242,6 @@
         <p class="form-message" id="wish-form-message" role="alert" aria-live="polite"></p>
       </form>
     </main>
-
-    <!-- Sugerencias de los campos con lista. Las opciones las rellena app.js
-         para tener los catálogos (años, países, colores) en un solo sitio. -->
-    <div id="datalists" hidden></div>
 
     <noscript>Garage 164 necesita JavaScript para descifrar los datos.</noscript>
     <script src="app.js" defer></script>

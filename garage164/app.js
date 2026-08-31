@@ -496,9 +496,9 @@ function closeWorkspace(view) {
 
 // --- Catálogos de los campos con lista --------------------------------------
 
-// Todos los campos con lista son de escritura libre (input + datalist): la
-// lista ahorra tecleo en el caso normal, pero una pieza rara siempre se puede
-// anotar a mano, y un registro viejo nunca se queda sin su valor al editarlo.
+// Los campos con lista ahorran tecleo en el caso normal, pero una pieza rara
+// siempre se puede anotar a mano con "Otro…", y un registro viejo nunca se
+// queda sin su valor al editarlo.
 
 const ANIO_INICIAL = 1968 // primer año de Hot Wheels
 
@@ -541,54 +541,107 @@ function rangeOptions(total) {
   return numeros
 }
 
-// Crea el <datalist> si no existe y le pone estas opciones (reemplazando las
-// anteriores, que es como se refresca la lista del número al cambiar el total).
-function setDatalist(id, values) {
-  const host = document.querySelector('#datalists')
-  let lista = document.querySelector(`#${id}`)
-  if (!lista) {
-    lista = document.createElement('datalist')
-    lista.id = id
-    host.append(lista)
-  }
-  lista.replaceChildren(...values.map((value) => {
-    const option = document.createElement('option')
-    option.value = value
-    return option
-  }))
+// Los campos con lista son <select> como el de Empaque, más una opción
+// "Otro…" al final: al elegirla aparece un campo de texto debajo. Así se
+// llenan de un clic en el caso normal, sin quedarse sin sitio donde anotar
+// una pieza fuera de catálogo (ni perder el valor de un registro viejo).
+const OTRO = '__otro__'
+
+const CAMPOS_CON_LISTA = [
+  'car-year', 'car-line-number-value', 'car-line-number-total',
+  'car-color', 'car-country', 'car-location',
+]
+
+// Rellena el select conservando lo que estuviera elegido, para que refrescar
+// la lista del número al cambiar el total no borre el número ya puesto.
+function setOptions(id, values, vacio = 'Sin especificar') {
+  const select = document.querySelector(`#${id}`)
+  const previo = select.value
+  const opciones = [
+    nuevaOpcion('', vacio),
+    ...values.map((value) => nuevaOpcion(String(value), String(value))),
+    nuevaOpcion(OTRO, 'Otro…'),
+  ]
+  select.replaceChildren(...opciones)
+  select.value = [...select.options].some((o) => o.value === previo) ? previo : ''
 }
 
-function buildDatalists() {
-  setDatalist('list-years', yearOptions())
-  setDatalist('list-line-totals', LINE_TOTALS)
-  setDatalist('list-line-values', rangeOptions(LINE_TOTAL_POR_DEFECTO))
-  setDatalist('list-countries', COUNTRIES)
-  setDatalist('list-locations', LOCATIONS)
-  setDatalist('list-colors', COLORS)
+function nuevaOpcion(value, texto) {
+  const option = document.createElement('option')
+  option.value = value
+  option.textContent = texto
+  return option
+}
+
+function buildListFields() {
+  setOptions('car-year', yearOptions(), 'Sin año')
+  setOptions('car-line-number-total', LINE_TOTALS, 'Sin total')
+  setOptions('car-line-number-value', rangeOptions(LINE_TOTAL_POR_DEFECTO), 'Sin número')
+  setOptions('car-country', COUNTRIES, 'Sin especificar')
+  setOptions('car-location', LOCATIONS, 'Sin especificar')
+  setOptions('car-color', COLORS, 'Sin especificar')
+  CAMPOS_CON_LISTA.forEach((id) => {
+    document.querySelector(`#${id}`).addEventListener('change', () => {
+      mostrarCampoOtro(id, { enfocar: true })
+      if (id === 'car-line-number-total') syncLineValues()
+    })
+  })
+}
+
+// Enseña u oculta el campo de texto de "Otro…" según lo elegido en el select.
+function mostrarCampoOtro(id, { enfocar = false } = {}) {
+  const select = document.querySelector(`#${id}`)
+  const otro = document.querySelector(`#${id}-other`)
+  const activo = select.value === OTRO
+  otro.hidden = !activo
+  if (!activo) otro.value = ''
+  else if (enfocar) otro.focus()
+}
+
+// Valor real del campo: el del select, o lo escrito a mano si está en "Otro…".
+function listVal(id) {
+  const select = document.querySelector(`#${id}`)
+  return select.value === OTRO ? val(`${id}-other`) : select.value
+}
+
+// Coloca un valor guardado: si está en la lista se elige; si no (un país raro,
+// un registro viejo), cae en "Otro…" con el texto intacto.
+function setListVal(id, value) {
+  const select = document.querySelector(`#${id}`)
+  const texto = value == null ? '' : String(value).trim()
+  const enLista = [...select.options].some((o) => o.value === texto && o.value !== OTRO)
+  if (texto && !enLista) {
+    select.value = OTRO
+    setVal(`${id}-other`, texto)
+  } else {
+    select.value = texto
+    setVal(`${id}-other`, '')
+  }
+  mostrarCampoOtro(id)
 }
 
 // El N.º de línea se guarda como siempre ("64/250"): la partición en dos
 // campos es solo de la pantalla, el dato en el vault no cambia de forma.
 function readLineNumber() {
-  const numero = val('car-line-number-value')
-  const total = val('car-line-number-total')
+  const numero = listVal('car-line-number-value')
+  const total = listVal('car-line-number-total')
   if (!numero) return ''
   return total ? `${numero}/${total}` : numero
 }
 
 function setLineNumber(lineNumber) {
   const [numero = '', total = ''] = String(lineNumber ?? '').split('/')
-  setVal('car-line-number-value', numero.trim())
-  setVal('car-line-number-total', total.trim())
+  setListVal('car-line-number-total', total.trim())
   syncLineValues()
+  setListVal('car-line-number-value', numero.trim())
 }
 
-// Ajusta la lista del número al total escrito, para no ofrecer un 300 en una
-// línea de 250. Un total fuera de catálogo deja la lista como está.
+// Ajusta la lista del número al total elegido, para no ofrecer un 300 en una
+// línea de 250. Un total escrito a mano fuera de rango deja la lista como está.
 function syncLineValues() {
-  const total = Number(val('car-line-number-total'))
+  const total = Number(listVal('car-line-number-total'))
   if (Number.isInteger(total) && total > 0 && total <= 999) {
-    setDatalist('list-line-values', rangeOptions(total))
+    setOptions('car-line-number-value', rangeOptions(total), 'Sin número')
   }
 }
 
@@ -606,17 +659,17 @@ function readCarForm() {
     model: val('car-model'),
     brand: val('car-brand'),
     series: val('car-series'),
-    year: val('car-year'),
+    year: listVal('car-year'),
     lineNumber: readLineNumber(),
     subseriesNumber: val('car-subseries-number'),
     toyNumber: code('car-toy-number'),
     dateCode: code('car-date-code'),
     assortment: code('car-assortment'),
     gtin: val('car-gtin').replace(/[\s-]/g, ''),
-    color: val('car-color'),
-    country: val('car-country'),
+    color: listVal('car-color'),
+    country: listVal('car-country'),
     package: val('car-package'),
-    location: val('car-location'),
+    location: listVal('car-location'),
     addedAt: val('car-added-at'),
     notes: val('car-notes'),
   }
@@ -626,17 +679,17 @@ function fillCarForm(car) {
   setVal('car-model', car.model)
   setVal('car-brand', car.brand)
   setVal('car-series', car.series)
-  setVal('car-year', car.year)
+  setListVal('car-year', car.year)
   setLineNumber(car.lineNumber)
   setVal('car-subseries-number', car.subseriesNumber)
   setVal('car-toy-number', car.toyNumber)
   setVal('car-date-code', car.dateCode)
   setVal('car-assortment', car.assortment)
   setVal('car-gtin', car.gtin)
-  setVal('car-color', car.color)
-  setVal('car-country', car.country)
+  setListVal('car-color', car.color)
+  setListVal('car-country', car.country)
   setVal('car-package', car.package)
-  setVal('car-location', car.location)
+  setListVal('car-location', car.location)
   setVal('car-added-at', car.addedAt)
   setVal('car-notes', car.notes)
 }
@@ -646,11 +699,13 @@ function resetCarForm() {
   setVal('car-edit-index', '')
   setVal('car-added-at', todayISO())
   // Lo que casi siempre es cierto viene escrito; se sobrescribe si toca.
-  setVal('car-year', currentYear())
-  setVal('car-line-number-total', LINE_TOTAL_POR_DEFECTO)
-  setVal('car-country', COUNTRY_POR_DEFECTO)
-  setVal('car-location', LOCATION_POR_DEFECTO)
+  setListVal('car-year', currentYear())
+  setListVal('car-line-number-total', LINE_TOTAL_POR_DEFECTO)
   syncLineValues()
+  setListVal('car-line-number-value', '')
+  setListVal('car-color', '')
+  setListVal('car-country', COUNTRY_POR_DEFECTO)
+  setListVal('car-location', LOCATION_POR_DEFECTO)
   document.querySelector('#car-form-submit').textContent = 'Registrar carrito'
   document.querySelector('#car-form-message').textContent = ''
 }
@@ -784,8 +839,6 @@ document.querySelector('#search').addEventListener('input', (event) => {
 
 // --- Eventos: formulario de carritos -------------------------------------
 
-document.querySelector('#car-line-number-total').addEventListener('input', syncLineValues)
-
 document.querySelector('#car-form-cancel').addEventListener('click', () => {
   resetCarForm()
   closeWorkspace()
@@ -894,4 +947,4 @@ document.querySelector('#wishlist-grid').addEventListener('click', async (event)
 
 // --- Arranque ----------------------------------------------------------------
 
-buildDatalists()
+buildListFields()
