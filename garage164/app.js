@@ -23,6 +23,12 @@ const session = {
   data: null, // { collectionName, updatedAt, cars, wishlist } ya descifrado
 }
 
+const editor = {
+  mode: 'create',
+  type: 'car',
+  index: null,
+}
+
 function fromBase64(value) {
   const binary = atob(value)
   return Uint8Array.from(binary, (char) => char.charCodeAt(0))
@@ -230,6 +236,78 @@ function showSyncMessage(text, isError = false) {
   syncMessage.style.color = isError ? '#ffad98' : 'var(--muted)'
 }
 
+// La colección, el registro y la edición son espacios de trabajo distintos.
+// Se mantienen dentro de la misma sesión para no guardar la contraseña ni la
+// llave de cifrado en el navegador entre páginas.
+function showView(view) {
+  document.querySelectorAll('.app-view').forEach((element) => {
+    element.hidden = element.dataset.view !== view
+  })
+  document.querySelectorAll('[data-view-target]').forEach((button) => {
+    const active = button.dataset.viewTarget === view
+    button.classList.toggle('is-active', active)
+    if (active) button.setAttribute('aria-current', 'page')
+    else button.removeAttribute('aria-current')
+  })
+}
+
+function updateCreateTypeControls(type) {
+  document.querySelectorAll('[data-create-type]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.createType === type)
+  })
+}
+
+function placeForm(type, hostId) {
+  const form = document.querySelector(type === 'car' ? '#car-form' : '#wish-form')
+  document.querySelector(type === 'car' ? '#wish-form' : '#car-form').hidden = true
+  document.querySelector(`#${hostId}`).append(form)
+  form.hidden = false
+}
+
+function openCreate(type = 'car') {
+  editor.mode = 'create'
+  editor.type = type
+  editor.index = null
+  document.querySelector('[data-view-target="edit"]').disabled = true
+  if (type === 'car') resetCarForm()
+  else resetWishForm()
+  placeForm(type, 'create-form-host')
+  updateCreateTypeControls(type)
+  showView('create')
+  document.querySelector(type === 'car' ? '#car-model' : '#wish-model').focus()
+}
+
+function openEdit(type, index) {
+  editor.mode = 'edit'
+  editor.type = type
+  editor.index = index
+  const isCar = type === 'car'
+  const entry = isCar ? session.data.cars[index] : session.data.wishlist[index]
+  if (isCar) {
+    fillCarForm(entry)
+    setVal('car-edit-index', String(index))
+    document.querySelector('#car-form-submit').textContent = 'Guardar cambios'
+  } else {
+    fillWishForm(entry)
+    setVal('wish-edit-index', String(index))
+    document.querySelector('#wish-form-submit').textContent = 'Guardar cambios'
+  }
+  document.querySelector('#edit-title').textContent = `Editar ${isCar ? 'carrito' : 'pieza deseada'}`
+  document.querySelector('#edit-description').textContent = `Actualiza los datos de ${entry.model || 'esta pieza'} y guarda cuando termines.`
+  document.querySelector('[data-view-target="edit"]').disabled = false
+  placeForm(type, 'edit-form-host')
+  showView('edit')
+  document.querySelector(isCar ? '#car-model' : '#wish-model').focus()
+}
+
+function returnToCollection() {
+  document.querySelector('#car-form').hidden = true
+  document.querySelector('#wish-form').hidden = true
+  editor.index = null
+  document.querySelector('[data-view-target="edit"]').disabled = true
+  showView('collection')
+}
+
 // --- Formularios de alta / edición ------------------------------------------
 
 function val(id) { return document.querySelector(`#${id}`).value.trim() }
@@ -264,7 +342,7 @@ function fillCarForm(car) {
 function resetCarForm() {
   document.querySelector('#car-form').reset()
   setVal('car-edit-index', '')
-  document.querySelector('#car-form-submit').textContent = 'Agregar carrito'
+  document.querySelector('#car-form-submit').textContent = 'Registrar carrito'
   document.querySelector('#car-form-message').textContent = ''
 }
 
@@ -293,7 +371,7 @@ function fillWishForm(item) {
 function resetWishForm() {
   document.querySelector('#wish-form').reset()
   setVal('wish-edit-index', '')
-  document.querySelector('#wish-form-submit').textContent = 'Agregar a la lista'
+  document.querySelector('#wish-form-submit').textContent = 'Registrar deseo'
   document.querySelector('#wish-form-message').textContent = ''
 }
 
@@ -357,6 +435,7 @@ accessForm.addEventListener('submit', async (event) => {
     accessShell.hidden = true
     garage.hidden = false
     render(data)
+    showView('collection')
   } catch (error) {
     formMessage.textContent = error.message.includes('operation') || error.name === 'OperationError'
       ? 'La contraseña no es correcta.'
@@ -369,6 +448,28 @@ accessForm.addEventListener('submit', async (event) => {
 
 document.querySelector('#lock-button').addEventListener('click', () => window.location.reload())
 
+document.querySelector('#header-create-button').addEventListener('click', () => openCreate())
+
+document.querySelectorAll('[data-view-target]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const target = button.dataset.viewTarget
+    if (target === 'create') openCreate(editor.type)
+    else if (target === 'collection') returnToCollection()
+    else if (target === 'edit' && editor.index !== null) {
+      placeForm(editor.type, 'edit-form-host')
+      showView('edit')
+    }
+  })
+})
+
+document.querySelectorAll('[data-back-to-collection]').forEach((button) => {
+  button.addEventListener('click', returnToCollection)
+})
+
+document.querySelectorAll('[data-create-type]').forEach((button) => {
+  button.addEventListener('click', () => openCreate(button.dataset.createType))
+})
+
 // --- Eventos: búsqueda --------------------------------------------------------
 
 document.querySelector('#search').addEventListener('input', (event) => {
@@ -378,15 +479,12 @@ document.querySelector('#search').addEventListener('input', (event) => {
 // --- Eventos: formulario de carritos -------------------------------------
 
 document.querySelector('#show-car-form').addEventListener('click', () => {
-  resetCarForm()
-  const form = document.querySelector('#car-form')
-  form.hidden = false
-  document.querySelector('#car-model').focus()
+  openCreate('car')
 })
 
 document.querySelector('#car-form-cancel').addEventListener('click', () => {
   resetCarForm()
-  document.querySelector('#car-form').hidden = true
+  returnToCollection()
 })
 
 document.querySelector('#car-form').addEventListener('submit', async (event) => {
@@ -409,7 +507,7 @@ document.querySelector('#car-form').addEventListener('submit', async (event) => 
       messageEl,
       onSuccess: () => {
         resetCarForm()
-        document.querySelector('#car-form').hidden = true
+        returnToCollection()
       },
     },
   )
@@ -420,13 +518,7 @@ document.querySelector('#cars-grid').addEventListener('click', async (event) => 
   const deleteBtn = event.target.closest('[data-delete-car]')
   if (editBtn) {
     const index = Number(editBtn.dataset.editCar)
-    const car = session.data.cars[index]
-    fillCarForm(car)
-    setVal('car-edit-index', String(index))
-    document.querySelector('#car-form-submit').textContent = 'Guardar cambios'
-    const form = document.querySelector('#car-form')
-    form.hidden = false
-    form.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    openEdit('car', index)
   }
   if (deleteBtn) {
     const index = Number(deleteBtn.dataset.deleteCar)
@@ -442,15 +534,12 @@ document.querySelector('#cars-grid').addEventListener('click', async (event) => 
 // --- Eventos: formulario de deseos -----------------------------------------
 
 document.querySelector('#show-wish-form').addEventListener('click', () => {
-  resetWishForm()
-  const form = document.querySelector('#wish-form')
-  form.hidden = false
-  document.querySelector('#wish-model').focus()
+  openCreate('wish')
 })
 
 document.querySelector('#wish-form-cancel').addEventListener('click', () => {
   resetWishForm()
-  document.querySelector('#wish-form').hidden = true
+  returnToCollection()
 })
 
 document.querySelector('#wish-form').addEventListener('submit', async (event) => {
@@ -473,7 +562,7 @@ document.querySelector('#wish-form').addEventListener('submit', async (event) =>
       messageEl,
       onSuccess: () => {
         resetWishForm()
-        document.querySelector('#wish-form').hidden = true
+        returnToCollection()
       },
     },
   )
@@ -484,13 +573,7 @@ document.querySelector('#wishlist-grid').addEventListener('click', async (event)
   const deleteBtn = event.target.closest('[data-delete-wish]')
   if (editBtn) {
     const index = Number(editBtn.dataset.editWish)
-    const item = session.data.wishlist[index]
-    fillWishForm(item)
-    setVal('wish-edit-index', String(index))
-    document.querySelector('#wish-form-submit').textContent = 'Guardar cambios'
-    const form = document.querySelector('#wish-form')
-    form.hidden = false
-    form.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    openEdit('wish', index)
   }
   if (deleteBtn) {
     const index = Number(deleteBtn.dataset.deleteWish)

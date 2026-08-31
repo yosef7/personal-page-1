@@ -34,97 +34,115 @@
           <h1 id="collection-name">Garage 164</h1>
           <p class="updated-at" id="updated-at"></p>
         </div>
-        <button class="text-button" type="button" id="lock-button">Cerrar</button>
+        <div class="header-actions">
+          <button class="text-button" type="button" id="lock-button">Cerrar</button>
+          <button class="primary-button header-create" type="button" id="header-create-button">Registrar pieza</button>
+        </div>
       </header>
+
+      <nav class="garage-nav" aria-label="Secciones de Garage 164">
+        <button class="garage-nav__item is-active" type="button" data-view-target="collection" aria-current="page">Vista principal</button>
+        <button class="garage-nav__item" type="button" data-view-target="create">Registrar</button>
+        <button class="garage-nav__item" type="button" data-view-target="edit" disabled>Edición</button>
+      </nav>
 
       <p class="sync-message" id="sync-message" role="status" aria-live="polite" hidden></p>
 
-      <section class="stats" aria-label="Resumen de la colección">
-        <article><span id="unique-models">0</span><small>modelos</small></article>
-        <article><span id="total-cars">0</span><small>carritos</small></article>
-        <article><span id="duplicate-cars">0</span><small>duplicados</small></article>
-        <article><span id="wishlist-count">0</span><small>por conseguir</small></article>
+      <section class="app-view" data-view="collection" aria-labelledby="catalog-title">
+        <section class="stats" aria-label="Resumen de la colección">
+          <article><span id="unique-models">0</span><small>modelos</small></article>
+          <article><span id="total-cars">0</span><small>carritos</small></article>
+          <article><span id="duplicate-cars">0</span><small>duplicados</small></article>
+          <article><span id="wishlist-count">0</span><small>por conseguir</small></article>
+        </section>
+
+        <section class="catalog-section" aria-labelledby="catalog-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Inventario</p>
+              <h2 id="catalog-title">Colección</h2>
+            </div>
+            <label class="search-label" for="search">Buscar <input id="search" type="search" placeholder="Modelo, serie o color" /></label>
+          </div>
+          <div class="section-actions">
+            <button class="primary-button" type="button" id="show-car-form">Registrar carrito</button>
+            <button class="text-button" type="button" id="show-wish-form">Registrar deseo</button>
+          </div>
+          <p class="empty-state" id="no-results" hidden>No hay resultados para esa búsqueda.</p>
+          <div class="cars-grid" id="cars-grid"></div>
+        </section>
+
+        <section class="wishlist-section" id="wishlist-section" aria-labelledby="wishlist-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Próximas piezas</p>
+              <h2 id="wishlist-title">Lista de deseos</h2>
+            </div>
+          </div>
+          <p class="empty-state" id="no-wishlist" hidden>Todavía no hay piezas en la lista de deseos.</p>
+          <div class="wishlist-grid" id="wishlist-grid"></div>
+        </section>
       </section>
 
-      <section class="catalog-section" aria-labelledby="catalog-title">
-        <div class="section-heading">
+      <section class="app-view workspace-view" data-view="create" hidden aria-labelledby="create-title">
+        <div class="workspace-heading">
           <div>
-            <p class="eyebrow">Inventario</p>
-            <h2 id="catalog-title">Colección</h2>
+            <p class="eyebrow">Nuevo registro</p>
+            <h2 id="create-title">Registrar una pieza</h2>
+            <p>Selecciona el tipo de registro y completa los datos de la pieza.</p>
           </div>
-          <label class="search-label" for="search">Buscar <input id="search" type="search" placeholder="Modelo, serie o color" /></label>
+          <button class="text-button back-button" type="button" data-back-to-collection>← Volver a la colección</button>
         </div>
-
-        <button class="text-button add-toggle" type="button" id="show-car-form">+ Agregar carrito</button>
-
-        <form class="entry-form" id="car-form" hidden novalidate>
-          <input type="hidden" id="car-edit-index" value="" />
-          <div class="entry-form__grid">
-            <label>Modelo <input id="car-model" required /></label>
-            <label>Marca <input id="car-brand" placeholder="Hot Wheels" /></label>
-            <label>Serie <input id="car-series" /></label>
-            <label>Año <input id="car-year" inputmode="numeric" /></label>
-            <label>Color <input id="car-color" /></label>
-            <label>Empaque
-              <select id="car-package">
-                <option value=""></option>
-                <option>Sellado</option>
-                <option>Abierto</option>
-                <option>Suelto</option>
-              </select>
-            </label>
-            <label>Ubicación <input id="car-location" /></label>
-            <label>Cantidad <input id="car-quantity" type="number" min="1" value="1" /></label>
-          </div>
-          <label class="entry-form__notes">Notas <textarea id="car-notes" rows="2"></textarea></label>
-          <div class="entry-form__actions">
-            <button class="primary-button" type="submit" id="car-form-submit">Agregar carrito</button>
-            <button class="text-button" type="button" id="car-form-cancel">Cancelar</button>
-          </div>
-          <p class="form-message" id="car-form-message" role="alert" aria-live="polite"></p>
-        </form>
-
-        <p class="empty-state" id="no-results" hidden>No hay resultados para esa búsqueda.</p>
-        <div class="cars-grid" id="cars-grid"></div>
+        <div class="record-type" role="group" aria-label="Tipo de registro">
+          <button class="record-type__button is-active" type="button" data-create-type="car">Carrito en colección</button>
+          <button class="record-type__button" type="button" data-create-type="wish">Pieza por conseguir</button>
+        </div>
+        <div class="form-host" id="create-form-host"></div>
       </section>
 
-      <section class="wishlist-section" id="wishlist-section" aria-labelledby="wishlist-title">
-        <div class="section-heading">
+      <section class="app-view workspace-view" data-view="edit" hidden aria-labelledby="edit-title">
+        <div class="workspace-heading">
           <div>
-            <p class="eyebrow">Próximas piezas</p>
-            <h2 id="wishlist-title">Lista de deseos</h2>
+            <p class="eyebrow">Actualización de registro</p>
+            <h2 id="edit-title">Editar pieza</h2>
+            <p id="edit-description">Revisa los datos antes de guardar los cambios.</p>
           </div>
+          <button class="text-button back-button" type="button" data-back-to-collection>← Volver a la colección</button>
         </div>
-
-        <button class="text-button add-toggle" type="button" id="show-wish-form">+ Agregar a la lista de deseos</button>
-
-        <form class="entry-form" id="wish-form" hidden novalidate>
-          <input type="hidden" id="wish-edit-index" value="" />
-          <div class="entry-form__grid">
-            <label>Modelo <input id="wish-model" required /></label>
-            <label>Serie <input id="wish-series" /></label>
-            <label>Año <input id="wish-year" inputmode="numeric" /></label>
-            <label>Color <input id="wish-color" /></label>
-            <label>Prioridad
-              <select id="wish-priority">
-                <option value="alta">Alta</option>
-                <option value="media" selected>Media</option>
-                <option value="baja">Baja</option>
-              </select>
-            </label>
-            <label>Dónde conseguirla <input id="wish-where" /></label>
-          </div>
-          <label class="entry-form__notes">Notas <textarea id="wish-notes" rows="2"></textarea></label>
-          <div class="entry-form__actions">
-            <button class="primary-button" type="submit" id="wish-form-submit">Agregar a la lista</button>
-            <button class="text-button" type="button" id="wish-form-cancel">Cancelar</button>
-          </div>
-          <p class="form-message" id="wish-form-message" role="alert" aria-live="polite"></p>
-        </form>
-
-        <p class="empty-state" id="no-wishlist" hidden>Todavía no hay piezas en la lista de deseos.</p>
-        <div class="wishlist-grid" id="wishlist-grid"></div>
+        <div class="form-host" id="edit-form-host"></div>
       </section>
+
+      <form class="entry-form" id="car-form" hidden novalidate>
+        <input type="hidden" id="car-edit-index" value="" />
+        <div class="entry-form__grid">
+          <label>Modelo <input id="car-model" required /></label>
+          <label>Marca <input id="car-brand" placeholder="Hot Wheels" /></label>
+          <label>Serie <input id="car-series" /></label>
+          <label>Año <input id="car-year" inputmode="numeric" /></label>
+          <label>Color <input id="car-color" /></label>
+          <label>Empaque <select id="car-package"><option value=""></option><option>Sellado</option><option>Abierto</option><option>Suelto</option></select></label>
+          <label>Ubicación <input id="car-location" /></label>
+          <label>Cantidad <input id="car-quantity" type="number" min="1" value="1" /></label>
+        </div>
+        <label class="entry-form__notes">Notas <textarea id="car-notes" rows="2"></textarea></label>
+        <div class="entry-form__actions"><button class="primary-button" type="submit" id="car-form-submit">Registrar carrito</button><button class="text-button" type="button" id="car-form-cancel">Cancelar</button></div>
+        <p class="form-message" id="car-form-message" role="alert" aria-live="polite"></p>
+      </form>
+
+      <form class="entry-form" id="wish-form" hidden novalidate>
+        <input type="hidden" id="wish-edit-index" value="" />
+        <div class="entry-form__grid">
+          <label>Modelo <input id="wish-model" required /></label>
+          <label>Serie <input id="wish-series" /></label>
+          <label>Año <input id="wish-year" inputmode="numeric" /></label>
+          <label>Color <input id="wish-color" /></label>
+          <label>Prioridad <select id="wish-priority"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select></label>
+          <label>Dónde conseguirla <input id="wish-where" /></label>
+        </div>
+        <label class="entry-form__notes">Notas <textarea id="wish-notes" rows="2"></textarea></label>
+        <div class="entry-form__actions"><button class="primary-button" type="submit" id="wish-form-submit">Registrar deseo</button><button class="text-button" type="button" id="wish-form-cancel">Cancelar</button></div>
+        <p class="form-message" id="wish-form-message" role="alert" aria-live="polite"></p>
+      </form>
     </main>
 
     <noscript>Garage 164 necesita JavaScript para descifrar los datos.</noscript>

@@ -93,10 +93,28 @@ input:focus { outline: 3px solid rgb(255 99 57 / 35%); outline-offset: 1px; }
 .form-message { min-height: 1.4em; margin: 2px 0 0; color: #ffad98; font-size: .9rem; }
 
 .garage { width: min(1160px, calc(100% - 40px)); margin: 0 auto; padding: 52px 0 72px; }
-.garage-header, .section-heading { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
+.garage-header, .section-heading, .workspace-heading { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
 .garage-header { padding-bottom: 34px; border-bottom: 1px solid var(--line); }
 .garage-header .text-button { margin-top: 4px; }
 .updated-at { margin-bottom: 0; font-size: .9rem; }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.header-create { margin-top: 0; white-space: nowrap; }
+
+.garage-nav { display: flex; gap: 6px; margin-top: 26px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.garage-nav__item {
+  cursor: pointer;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 700;
+}
+.garage-nav__item:hover:not(:disabled) { color: var(--ink); background: rgb(255 255 255 / 7%); }
+.garage-nav__item.is-active { background: rgb(255 99 57 / 16%); color: #ff997e; }
+.garage-nav__item:disabled { cursor: not-allowed; opacity: .45; }
 
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0 52px; }
 .stats article, .car-card, .wish-card { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; }
@@ -105,6 +123,8 @@ input:focus { outline: 3px solid rgb(255 99 57 / 35%); outline-offset: 1px; }
 .stats small { color: var(--muted); }
 
 .catalog-section, .wishlist-section { margin-top: 48px; }
+.section-actions { display: flex; gap: 8px; align-items: center; margin-top: 18px; }
+.section-actions .primary-button { margin: 0; }
 .search-label { width: min(100%, 280px); display: grid; gap: 6px; }
 .search-label input { padding: 10px 12px; }
 .cars-grid, .wishlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); gap: 15px; margin-top: 20px; }
@@ -119,19 +139,44 @@ input:focus { outline: 3px solid rgb(255 99 57 / 35%); outline-offset: 1px; }
 .priority-baja { color: #9fc9a4; }
 .empty-state { margin: 26px 0; color: var(--muted); }
 
+.workspace-view { width: min(100%, 800px); margin: 46px auto 0; }
+.workspace-heading { padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+.workspace-heading h2 { margin-bottom: 8px; font-size: clamp(1.6rem, 4vw, 2.15rem); }
+.workspace-heading p:not(.eyebrow) { max-width: 520px; margin-bottom: 0; color: var(--muted); line-height: 1.55; }
+.back-button { flex: 0 0 auto; }
+.record-type { display: flex; gap: 8px; margin-top: 28px; }
+.record-type__button {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 700;
+}
+.record-type__button:hover { border-color: #5d584e; color: var(--ink); }
+.record-type__button.is-active { border-color: var(--accent); background: rgb(255 99 57 / 12%); color: #ffae99; }
+.form-host .entry-form { margin-top: 18px; }
+
 @media (max-width: 680px) {
   .garage { width: min(100% - 28px, 1160px); padding-top: 32px; }
-  .garage-header, .section-heading { flex-direction: column; gap: 16px; }
+  .garage-header, .section-heading, .workspace-heading { flex-direction: column; gap: 16px; }
+  .header-actions { width: 100%; justify-content: space-between; }
+  .header-create { flex: 1; }
+  .garage-nav { overflow-x: auto; padding-bottom: 14px; }
+  .garage-nav__item { white-space: nowrap; }
   .stats { grid-template-columns: repeat(2, 1fr); margin-bottom: 38px; }
   .search-label { width: 100%; }
+  .section-actions { width: 100%; flex-wrap: wrap; }
+  .workspace-view { margin-top: 32px; }
+  .record-type { flex-direction: column; }
 }
 
 /* --- Edición en vivo (agregar / editar / eliminar) ----------------------- */
 
 .sync-message { margin: -18px 0 24px; color: var(--muted); font-size: .85rem; }
-
-.add-toggle { margin-top: 18px; padding-left: 0; color: var(--accent); font-weight: 700; }
-.add-toggle:hover { background: transparent; color: #ff774f; }
 
 .entry-form {
   margin: 16px 0 24px;

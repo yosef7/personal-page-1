@@ -34,7 +34,7 @@ La contraseña nunca se envía a ningún servidor. Lo único que sale del navega
 
 | Archivo | ¿Se publica? | Para qué sirve |
 | --- | --- | --- |
-| `index.html` | Sí | La página: acceso, catálogo, formularios de alta/edición |
+| `index.html` | Sí | La aplicación: acceso, vista principal, registro y edición separados |
 | `styles.css` | Sí | Estilos (tema oscuro) |
 | `app.js` | Sí | Descifra, cifra y llama a la Function desde el navegador |
 | `data.example.json` | Sí | Plantilla de ejemplo, con datos inventados |
@@ -102,9 +102,9 @@ Abre <https://www.arnulforeyes.com/garage164/>, ingresa la contraseña y confirm
 1. Entra a la dirección y escribe la contraseña compartida. El botón **Mostrar** permite verla mientras la escribes.
 2. Arriba aparece un resumen: **modelos**, **carritos**, **duplicados** y **por conseguir**.
 3. El buscador filtra por modelo, marca, serie, color o ubicación, ignorando acentos y mayúsculas.
-4. **+ Agregar carrito** abre un formulario para sumar una pieza nueva a la colección. Solo el modelo es obligatorio.
-5. **+ Agregar a la lista de deseos** hace lo mismo para algo que todavía no tienes.
-6. Cada tarjeta tiene **Editar** (carga sus datos en el formulario para corregirlos) y **Eliminar** (pide confirmación antes de quitarla).
+4. La **Vista principal** reúne únicamente el resumen, buscador y las tarjetas de colección/deseos.
+5. **Registrar** abre un espacio independiente para crear un carrito o una pieza por conseguir. Solo el modelo es obligatorio.
+6. Cada tarjeta tiene **Editar** (abre un espacio independiente con los datos cargados) y **Eliminar** (pide confirmación antes de quitarla).
 7. Cualquier alta, edición o borrado se guarda al instante — no hace falta ningún paso adicional, y el cambio ya es visible para quien abra la página después, incluso desde otro teléfono.
 8. **Cerrar** recarga la página y vuelve a la pantalla de contraseña. Úsalo si prestas el teléfono o dejas la computadora abierta — la contraseña solo vive en la memoria de esa pestaña mientras está abierta.
 
@@ -193,5 +193,6 @@ Al guardar, el navegador manda el token de escritura; la Function calcula su has
 | Al guardar desde el formulario: “No fue posible guardar: credencial de escritura no válida” | `GARAGE164_WRITE_HASH` no está configurada, no coincide con la contraseña, o falta redesplegar tras crearla | Repite el Paso 1; recuerda disparar un deploy nuevo después de guardar la variable |
 | “Alguien más actualizó la colección. Recargando…” | Dos personas guardaron casi al mismo tiempo | Normal — la página ya recargó la versión más reciente; repite tu cambio si hacía falta |
 | `publish-vault.mjs` dice “Conflicto” | Lo mismo, desde la terminal | Vuelve a correr `publicar.sh` |
+| `OSError: [Errno 48] Address already in use` al ejecutar `python3 -m http.server 8001` | El puerto 8001 ya está siendo usado por otro servidor local | Confirma qué proceso lo ocupa con `lsof -nP -iTCP:8001 -sTCP:LISTEN`. Si es una prueba anterior tuya, vuelve a esa terminal y usa `Ctrl+C`; si ya no tienes esa terminal, revisa el PID mostrado por `lsof` antes de cerrarlo con `kill <PID>`. Como alternativa, inicia la prueba en otro puerto: `python3 -m http.server 8002`, y abre `http://127.0.0.1:8002/garage164/`. |
 | La página queda en blanco | JavaScript está desactivado | La página lo necesita para cifrar y descifrar; actívalo |
 | Ves `garage164/data.json` en `git status` | El `.gitignore` no se está aplicando | **No hagas commit.** Revisa `.gitignore` antes de continuar |
