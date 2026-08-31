@@ -34,7 +34,7 @@ La contraseña nunca se envía a ningún servidor. Lo único que sale del navega
 
 | Archivo | ¿Se publica? | Para qué sirve |
 | --- | --- | --- |
-| `index.html` | Sí | La aplicación: acceso, vista principal, registro y edición separados |
+| `index.html` | Sí | La aplicación: acceso, dashboard, colección, deseos, registro y edición, cada uno en su propia sección |
 | `styles.css` | Sí | Estilos (tema oscuro) |
 | `app.js` | Sí | Descifra, cifra y llama a la Function desde el navegador |
 | `data.example.json` | Sí | Plantilla de ejemplo, con datos inventados |
@@ -100,19 +100,33 @@ Abre <https://www.arnulforeyes.com/garage164/>, ingresa la contraseña y confirm
 ## 5. Cómo se usa la página
 
 1. Entra a la dirección y escribe la contraseña compartida. El botón **Mostrar** permite verla mientras la escribes.
-2. Arriba aparece un resumen: **modelos**, **carritos**, **duplicados** y **por conseguir**.
-3. El buscador filtra por modelo, marca, serie, color o ubicación, ignorando acentos y mayúsculas.
-4. La **Vista principal** reúne únicamente el resumen, buscador y las tarjetas de colección/deseos.
-5. **Registrar** abre un espacio independiente para crear un carrito o una pieza por conseguir. Solo el modelo es obligatorio.
-6. Cada tarjeta tiene **Editar** (abre un espacio independiente con los datos cargados) y **Eliminar** (pide confirmación antes de quitarla).
-7. Cualquier alta, edición o borrado se guarda al instante — no hace falta ningún paso adicional, y el cambio ya es visible para quien abra la página después, incluso desde otro teléfono.
-8. **Cerrar** recarga la página y vuelve a la pantalla de contraseña. Úsalo si prestas el teléfono o dejas la computadora abierta — la contraseña solo vive en la memoria de esa pestaña mientras está abierta.
+2. La página abre en el **Dashboard**. La barra de arriba tiene **tres secciones**, y cada una hace una sola cosa:
+
+| Sección | Qué hay | Qué no hay |
+| --- | --- | --- |
+| **Dashboard** | Los totales y el resumen de la colección | Ningún formulario ni botón de alta: es solo de lectura |
+| **Colección** | Las tarjetas de los carritos, el buscador y **Registrar carrito** | La lista de deseos |
+| **Lista de deseos** | Las piezas por conseguir y **Registrar deseo** | Los carritos que ya tienes |
+
+3. **Registrar** y **Editar** no son secciones de la barra: son una pantalla de trabajo a la que se entra desde la sección correspondiente y que se cierra con **Volver**. El tipo de ficha lo decide de dónde entras —desde Colección registras un carrito; desde Lista de deseos, un deseo—, así que no hay que elegirlo en ningún selector. Al guardar o al volver, la página te deja donde estabas.
+4. El dashboard se lee en tres bloques, de arriba hacia abajo:
+   - **Actividad** — las últimas piezas registradas.
+   - **Composición** — cuántas piezas por serie temática y por tipo de empaque.
+   - **Pendientes** — los modelos que tienes repetidos y las fichas a las que les falta un dato del blister.
+5. Todo ocurre en la misma pestaña: cambiar de sección no recarga la página, así que no se vuelve a pedir la contraseña y esta sigue sin guardarse en ningún lado.
+6. El buscador de **Colección** filtra por modelo, marca, serie, color, ubicación, país y también por los códigos del blister —toy number, assortment, GTIN, número de línea, date code—, ignorando acentos y mayúsculas.
+7. En el dashboard, las barras comparan cada grupo contra el más numeroso, no contra el total; el número a la derecha es la cuenta real.
+8. Cada tarjeta tiene **Editar** y **Eliminar** (esta pide confirmación antes de quitarla).
+9. Cada registro es **una pieza física**. Si compras un segundo ejemplar del mismo modelo, regístralo aparte: así cada uno lleva su propio date code y su propio empaque, y la página los marca sola como *Pieza 1 de 2*, *Pieza 2 de 2*.
+10. Cualquier alta, edición o borrado se guarda al instante — no hace falta ningún paso adicional, y el cambio ya es visible para quien abra la página después, incluso desde otro teléfono.
+11. **Cerrar** recarga la página y vuelve a la pantalla de contraseña. Úsalo si prestas el teléfono o dejas la computadora abierta — la contraseña solo vive en la memoria de esa pestaña mientras está abierta.
 
 ## 6. Cuándo usar el formulario y cuándo `publicar.sh`
 
 | Situación | Qué usar |
 | --- | --- |
-| Compraste un carrito, quieres agregarlo ya | El formulario **+ Agregar carrito**, en la página |
+| Compraste un carrito, quieres agregarlo ya | El formulario **Registrar carrito**, en la página |
+| Compraste un repetido del mismo modelo | Otro registro con **Registrar carrito**: una fila por pieza, cada una con su date code |
 | Corregir un dato de una pieza | **Editar** en su tarjeta |
 | Ya no la tienes / te equivocaste al cargarla | **Eliminar** en su tarjeta |
 | Vas a reconstruir la colección completa desde cero, o hacer una limpieza grande editando muchas piezas a la vez | Editar `garage164/data.json` y correr `publicar.sh` |
@@ -122,12 +136,12 @@ Abre <https://www.arnulforeyes.com/garage164/>, ingresa la contraseña y confirm
 
 ## 7. Formato de los datos
 
-Sin cambios respecto a antes — el mismo objeto, ya sea que lo edites en `data.json` o lo generen los formularios de la página:
+El objeto es el mismo, lo edites en `data.json` o lo generen los formularios de la página:
 
 ```json
 {
   "collectionName": "Garage 164",
-  "updatedAt": "2026-08-24",
+  "updatedAt": "2026-08-30",
   "cars": [ ... ],
   "wishlist": [ ... ]
 }
@@ -135,13 +149,32 @@ Sin cambios respecto a antes — el mismo objeto, ya sea que lo edites en `data.
 
 ### Cada carrito, dentro de `cars`
 
-| Campo | Obligatorio | Notas |
+**Cada entrada es una pieza física, no un modelo.** Dos ejemplares del mismo carrito son dos entradas, porque cada uno trae su propio date code y puede estar en blister o suelto. Por eso no hay campo de cantidad: los duplicados salen de contar entradas que comparten `model`.
+
+Solo `model` es obligatorio. Todo lo demás se deja vacío sin problema — una pieza suelta no tiene blister, así que no tiene assortment, ni GTIN, ni número de línea que leer.
+
+| Campo | Qué es | Ejemplo |
 | --- | --- | --- |
-| `model` | Sí | El nombre grande de la tarjeta. También agrupa los duplicados |
-| `brand` | No | Si falta, se asume “Hot Wheels” |
-| `series`, `year`, `color`, `package`, `location` | No | Aparecen como etiquetas |
-| `quantity` | No | Si falta, cuenta como 1 |
-| `notes` | No | Texto libre bajo el título |
+| `model` | El nombre grande de la tarjeta. Agrupa los duplicados. **Obligatorio** | `Batmobile` |
+| `brand` | Si falta, se asume “Hot Wheels” | `Hot Wheels` |
+| `series` | Serie temática | `Batman` |
+| `year` | Año de la línea. Sin él, `lineNumber` es ambiguo: el mismo casting reaparece con otro número al año siguiente | `2024` |
+| `lineNumber` | Posición en la línea de ese año | `64/250` |
+| `subseriesNumber` | Posición dentro de la subserie | `2/5` |
+| `toyNumber` | Código del modelo de ese año | `HYX81` |
+| `dateCode` | Código de producción de **esta** pieza: planta, año y semana. Es lo que distingue dos ejemplares idénticos | `N7C5` |
+| `assortment` | Código del surtido en que salió | `C4982` |
+| `gtin` | Código de barras. Se valida: 8, 12, 13 o 14 dígitos | `194735012345` |
+| `color` | | `Negro` |
+| `country` | País de fabricación | `Malasia` |
+| `package` | `blister`, `blister abierto` o `suelto` | `blister` |
+| `location` | Dónde está guardada | `Vitrina` |
+| `addedAt` | Fecha de registro, `AAAA-MM-DD`. El formulario la pone sola en el día de hoy | `2026-08-24` |
+| `notes` | Texto libre bajo el título | |
+
+En la tarjeta, `lineNumber` y `subseriesNumber` salen bajo el nombre; `toyNumber`, `dateCode`, `assortment` y `gtin` van juntos en monoespaciado al pie, para poder cotejarlos carácter por carácter contra la pieza.
+
+> **Formato anterior.** Los registros que tuvieran `quantity: 3` se separan solos en tres entradas la primera vez que abras la colección, y el empaque en castellano se traduce (`Sellado` → `blister`, `Abierto` → `blister abierto`, `Suelto` → `suelto`). La conversión queda guardada con tu siguiente edición. Si publicas con `publicar.sh`, usa ya el formato nuevo.
 
 ### Cada pieza deseada, dentro de `wishlist`
 

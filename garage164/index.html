@@ -28,6 +28,8 @@
     </main>
 
     <main class="garage" id="garage" hidden>
+      <!-- Encabezado: identidad de la colección y cierre de sesión. Ninguna
+           acción de contenido vive aquí; cada sección tiene la suya. -->
       <header class="garage-header">
         <div>
           <p class="eyebrow">Colección compartida</p>
@@ -36,94 +38,162 @@
         </div>
         <div class="header-actions">
           <button class="text-button" type="button" id="lock-button">Cerrar</button>
-          <button class="primary-button header-create" type="button" id="header-create-button">Registrar pieza</button>
         </div>
       </header>
 
-      <nav class="garage-nav" aria-label="Secciones de Garage 164">
-        <button class="garage-nav__item is-active" type="button" data-view-target="collection" aria-current="page">Vista principal</button>
-        <button class="garage-nav__item" type="button" data-view-target="create">Registrar</button>
-        <button class="garage-nav__item" type="button" data-view-target="edit" disabled>Edición</button>
+      <!-- La barra lista lugares, no acciones: registrar y editar son
+           pantallas de trabajo a las que se entra desde su sección. -->
+      <nav class="garage-nav" id="garage-nav" aria-label="Secciones de Garage 164">
+        <button class="garage-nav__item is-active" type="button" data-view-target="dashboard" aria-current="page">Dashboard</button>
+        <button class="garage-nav__item" type="button" data-view-target="collection">Colección</button>
+        <button class="garage-nav__item" type="button" data-view-target="wishlist">Lista de deseos</button>
+        <button class="primary-button nav-create" type="button" id="nav-create" data-new="car">Registrar carrito</button>
       </nav>
 
       <p class="sync-message" id="sync-message" role="status" aria-live="polite" hidden></p>
 
-      <section class="app-view" data-view="collection" aria-labelledby="catalog-title">
-        <section class="stats" aria-label="Resumen de la colección">
+      <!-- ── Dashboard: solo lectura ─────────────────────────────────────── -->
+      <section class="app-view" data-view="dashboard" aria-labelledby="dashboard-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Resumen</p>
+            <h2 id="dashboard-title">Dashboard</h2>
+          </div>
+        </div>
+
+        <section class="stats" aria-label="Totales de la colección">
           <article><span id="unique-models">0</span><small>modelos</small></article>
           <article><span id="total-cars">0</span><small>carritos</small></article>
           <article><span id="duplicate-cars">0</span><small>duplicados</small></article>
           <article><span id="wishlist-count">0</span><small>por conseguir</small></article>
         </section>
 
-        <section class="catalog-section" aria-labelledby="catalog-title">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Inventario</p>
-              <h2 id="catalog-title">Colección</h2>
-            </div>
-            <label class="search-label" for="search">Buscar <input id="search" type="search" placeholder="Modelo, serie o color" /></label>
-          </div>
-          <div class="section-actions">
-            <button class="primary-button" type="button" id="show-car-form">Registrar carrito</button>
-            <button class="text-button" type="button" id="show-wish-form">Registrar deseo</button>
-          </div>
-          <p class="empty-state" id="no-results" hidden>No hay resultados para esa búsqueda.</p>
-          <div class="cars-grid" id="cars-grid"></div>
-        </section>
+        <p class="empty-state" id="dashboard-empty" hidden>Todavía no hay piezas registradas. Empieza en <strong>Colección</strong>.</p>
 
-        <section class="wishlist-section" id="wishlist-section" aria-labelledby="wishlist-title">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Próximas piezas</p>
-              <h2 id="wishlist-title">Lista de deseos</h2>
+        <div id="dashboard-panels">
+          <section class="dashboard-block" aria-labelledby="block-activity">
+            <h3 class="block-title" id="block-activity">Actividad</h3>
+            <div class="dashboard-grid">
+              <article class="panel">
+                <h4>Últimas registradas</h4>
+                <ol class="panel-list" id="recent-list"></ol>
+              </article>
             </div>
-          </div>
-          <p class="empty-state" id="no-wishlist" hidden>Todavía no hay piezas en la lista de deseos.</p>
-          <div class="wishlist-grid" id="wishlist-grid"></div>
-        </section>
+          </section>
+
+          <section class="dashboard-block" aria-labelledby="block-composition">
+            <h3 class="block-title" id="block-composition">Composición</h3>
+            <div class="dashboard-grid">
+              <article class="panel">
+                <h4>Por serie temática</h4>
+                <ul class="bar-list" id="series-breakdown"></ul>
+              </article>
+              <article class="panel">
+                <h4>Por empaque</h4>
+                <ul class="bar-list" id="package-breakdown"></ul>
+              </article>
+            </div>
+          </section>
+
+          <section class="dashboard-block" aria-labelledby="block-pending">
+            <h3 class="block-title" id="block-pending">Pendientes</h3>
+            <div class="dashboard-grid">
+              <article class="panel">
+                <h4>Modelos con más de una pieza</h4>
+                <ul class="panel-list" id="duplicates-list"></ul>
+                <p class="panel-note" id="duplicates-empty" hidden>Ningún modelo repetido por ahora.</p>
+              </article>
+              <article class="panel">
+                <h4>Fichas por completar</h4>
+                <p class="panel-note">Piezas a las que les falta un dato del blister.</p>
+                <ul class="bar-list" id="incomplete-breakdown"></ul>
+                <p class="panel-note" id="incomplete-empty" hidden>Todas las fichas están completas.</p>
+              </article>
+            </div>
+          </section>
+        </div>
       </section>
 
-      <section class="app-view workspace-view" data-view="create" hidden aria-labelledby="create-title">
+      <!-- ── Colección: las piezas que tienes ────────────────────────────── -->
+      <section class="app-view" data-view="collection" aria-labelledby="catalog-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Inventario</p>
+            <h2 id="catalog-title">Colección</h2>
+            <p class="section-note" id="collection-note"></p>
+          </div>
+        </div>
+        <div class="section-toolbar">
+          <label class="search-label" for="search">Buscar <input id="search" type="search" placeholder="Modelo, serie, toy number, assortment…" /></label>
+        </div>
+        <p class="empty-state" id="no-results" hidden>No hay resultados para esa búsqueda.</p>
+        <div class="cars-grid" id="cars-grid"></div>
+      </section>
+
+      <!-- ── Lista de deseos: las piezas que buscas ──────────────────────── -->
+      <section class="app-view" data-view="wishlist" aria-labelledby="wishlist-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Próximas piezas</p>
+            <h2 id="wishlist-title">Lista de deseos</h2>
+            <p class="section-note" id="wishlist-note"></p>
+          </div>
+        </div>
+        <p class="empty-state" id="no-wishlist" hidden>Todavía no hay piezas en la lista de deseos.</p>
+        <div class="wishlist-grid" id="wishlist-grid"></div>
+      </section>
+
+      <!-- ── Pantalla de trabajo: registrar o editar ─────────────────────── -->
+      <!-- Una sola, con título propio según lo que estés haciendo. El tipo de
+           ficha lo decide la sección de la que entraste, no un selector. -->
+      <section class="app-view workspace-view" data-view="workspace" hidden aria-labelledby="workspace-title">
         <div class="workspace-heading">
           <div>
-            <p class="eyebrow">Nuevo registro</p>
-            <h2 id="create-title">Registrar una pieza</h2>
-            <p>Selecciona el tipo de registro y completa los datos de la pieza.</p>
+            <p class="eyebrow" id="workspace-eyebrow">Nuevo registro</p>
+            <h2 id="workspace-title">Registrar carrito</h2>
+            <p id="workspace-description">Solo el modelo es obligatorio.</p>
           </div>
-          <button class="text-button back-button" type="button" data-back-to-collection>← Volver a la colección</button>
+          <button class="text-button back-button" type="button" data-back>← Volver</button>
         </div>
-        <div class="record-type" role="group" aria-label="Tipo de registro">
-          <button class="record-type__button is-active" type="button" data-create-type="car">Carrito en colección</button>
-          <button class="record-type__button" type="button" data-create-type="wish">Pieza por conseguir</button>
-        </div>
-        <div class="form-host" id="create-form-host"></div>
+        <div class="form-host" id="form-host"></div>
       </section>
 
-      <section class="app-view workspace-view" data-view="edit" hidden aria-labelledby="edit-title">
-        <div class="workspace-heading">
-          <div>
-            <p class="eyebrow">Actualización de registro</p>
-            <h2 id="edit-title">Editar pieza</h2>
-            <p id="edit-description">Revisa los datos antes de guardar los cambios.</p>
-          </div>
-          <button class="text-button back-button" type="button" data-back-to-collection>← Volver a la colección</button>
-        </div>
-        <div class="form-host" id="edit-form-host"></div>
-      </section>
-
+      <!-- Plantillas de formulario: viven fuera de las vistas y se colocan en
+           la pantalla de trabajo cuando hacen falta. -->
       <form class="entry-form" id="car-form" hidden novalidate>
         <input type="hidden" id="car-edit-index" value="" />
-        <div class="entry-form__grid">
-          <label>Modelo <input id="car-model" required /></label>
-          <label>Marca <input id="car-brand" placeholder="Hot Wheels" /></label>
-          <label>Serie <input id="car-series" /></label>
-          <label>Año <input id="car-year" inputmode="numeric" /></label>
-          <label>Color <input id="car-color" /></label>
-          <label>Empaque <select id="car-package"><option value=""></option><option>Sellado</option><option>Abierto</option><option>Suelto</option></select></label>
-          <label>Ubicación <input id="car-location" /></label>
-          <label>Cantidad <input id="car-quantity" type="number" min="1" value="1" /></label>
-        </div>
+        <fieldset class="entry-form__group">
+          <legend>Identificación</legend>
+          <div class="entry-form__grid">
+            <label>Modelo <input id="car-model" required /></label>
+            <label>Marca <input id="car-brand" placeholder="Hot Wheels" /></label>
+            <label>Serie temática <input id="car-series" placeholder="Batman" /></label>
+            <label>Año de la línea <input id="car-year" inputmode="numeric" placeholder="2024" /></label>
+          </div>
+        </fieldset>
+        <fieldset class="entry-form__group">
+          <legend>Numeración del empaque</legend>
+          <div class="entry-form__grid">
+            <label>N.º de línea <input id="car-line-number" placeholder="64/250" /></label>
+            <label>N.º de subserie <input id="car-subseries-number" placeholder="2/5" /></label>
+            <label>Toy number <input id="car-toy-number" placeholder="HYX81" autocapitalize="characters" /></label>
+            <label>Date code <input id="car-date-code" placeholder="N7C5" autocapitalize="characters" /></label>
+            <label>Assortment <input id="car-assortment" placeholder="C4982" autocapitalize="characters" /></label>
+            <label>GTIN <input id="car-gtin" inputmode="numeric" placeholder="194735012345" /></label>
+          </div>
+          <p class="entry-form__hint">El <strong>toy number</strong> identifica el modelo de ese año; el <strong>date code</strong> —las letras que lo acompañan en el blister— identifica esta pieza en concreto: planta, año y semana de producción.</p>
+        </fieldset>
+        <fieldset class="entry-form__group">
+          <legend>La pieza</legend>
+          <div class="entry-form__grid">
+            <label>Color <input id="car-color" /></label>
+            <label>País de fabricación <input id="car-country" placeholder="Malasia" /></label>
+            <label>Empaque <select id="car-package"><option value="">Sin especificar</option><option value="blister">Blister sellado</option><option value="blister abierto">Blister abierto</option><option value="suelto">Suelto</option></select></label>
+            <label>Ubicación <input id="car-location" /></label>
+            <label>Fecha de registro <input id="car-added-at" type="date" /></label>
+          </div>
+          <p class="entry-form__hint">Cada registro es <strong>una pieza física</strong>. Si compras un segundo ejemplar del mismo modelo, regístralo aparte: la página los cuenta como duplicados sola.</p>
+        </fieldset>
         <label class="entry-form__notes">Notas <textarea id="car-notes" rows="2"></textarea></label>
         <div class="entry-form__actions"><button class="primary-button" type="submit" id="car-form-submit">Registrar carrito</button><button class="text-button" type="button" id="car-form-cancel">Cancelar</button></div>
         <p class="form-message" id="car-form-message" role="alert" aria-live="polite"></p>
@@ -131,14 +201,17 @@
 
       <form class="entry-form" id="wish-form" hidden novalidate>
         <input type="hidden" id="wish-edit-index" value="" />
-        <div class="entry-form__grid">
-          <label>Modelo <input id="wish-model" required /></label>
-          <label>Serie <input id="wish-series" /></label>
-          <label>Año <input id="wish-year" inputmode="numeric" /></label>
-          <label>Color <input id="wish-color" /></label>
-          <label>Prioridad <select id="wish-priority"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select></label>
-          <label>Dónde conseguirla <input id="wish-where" /></label>
-        </div>
+        <fieldset class="entry-form__group">
+          <legend>La pieza que buscas</legend>
+          <div class="entry-form__grid">
+            <label>Modelo <input id="wish-model" required /></label>
+            <label>Serie <input id="wish-series" /></label>
+            <label>Año <input id="wish-year" inputmode="numeric" /></label>
+            <label>Color <input id="wish-color" /></label>
+            <label>Prioridad <select id="wish-priority"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select></label>
+            <label>Dónde conseguirla <input id="wish-where" /></label>
+          </div>
+        </fieldset>
         <label class="entry-form__notes">Notas <textarea id="wish-notes" rows="2"></textarea></label>
         <div class="entry-form__actions"><button class="primary-button" type="submit" id="wish-form-submit">Registrar deseo</button><button class="text-button" type="button" id="wish-form-cancel">Cancelar</button></div>
         <p class="form-message" id="wish-form-message" role="alert" aria-live="polite"></p>

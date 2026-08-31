@@ -27,6 +27,20 @@ const editor = {
   mode: 'create',
   type: 'car',
   index: null,
+  returnTo: 'dashboard', // vista a la que regresa el botón "Volver"
+}
+
+// Vistas con contenido propio, frente a las de trabajo (registrar / editar).
+const CONTENT_VIEWS = ['dashboard', 'collection', 'wishlist']
+let currentView = 'dashboard'
+
+// El único botón de alta de la aplicación vive en la barra y anuncia qué va a
+// registrar según la sección abierta. En la pantalla de trabajo se esconde:
+// ahí ya estás registrando.
+const NAV_CREATE = {
+  dashboard: { type: 'car', label: 'Registrar carrito' },
+  collection: { type: 'car', label: 'Registrar carrito' },
+  wishlist: { type: 'wish', label: 'Registrar deseo' },
 }
 
 function fromBase64(value) {
@@ -103,6 +117,36 @@ function normalize(value) {
 
 function stat(value, id) { document.querySelector(id).textContent = String(value) }
 
+// --- Formato de los datos ---------------------------------------------------
+//
+// Cada entrada de cars[] es UNA pieza física, no un modelo: dos ejemplares del
+// mismo carrito son dos registros, porque cada uno trae su propio date code y
+// puede estar en blister o suelto. Los duplicados salen de contar registros
+// que comparten modelo, así que ya no hace falta un campo "cantidad".
+
+const LEGACY_PACKAGES = { sellado: 'blister', abierto: 'blister abierto', suelto: 'suelto' }
+
+// Convierte un registro del formato viejo (un modelo con `quantity`) en tantos
+// registros como piezas representaba. Se aplica al descifrar; el vault queda
+// convertido en el siguiente guardado.
+function adoptCars(cars) {
+  const adopted = []
+  for (const car of cars) {
+    const copies = Math.max(1, Math.floor(Number(car.quantity)) || 1)
+    const entry = { ...car }
+    const legacy = LEGACY_PACKAGES[normalize(entry.package)]
+    if (legacy) entry.package = legacy
+    delete entry.quantity
+    for (let i = 0; i < copies; i += 1) adopted.push({ ...entry })
+  }
+  return adopted
+}
+
+function adoptData(data) {
+  const cars = Array.isArray(data.cars) ? data.cars : []
+  return { ...data, cars: adoptCars(cars), wishlist: Array.isArray(data.wishlist) ? data.wishlist : [] }
+}
+
 function formatDate(value) {
   if (!value) return ''
   const date = new Date(`${value}T12:00:00`)
@@ -162,27 +206,62 @@ async function saveVault(data) {
 
 // --- Renderizado -----------------------------------------------------------
 
+// Texto sobre el que busca el filtro. Incluye los códigos del blister porque
+// buscar "C4982" o el toy number es justo como se localiza una pieza cuando ya
+// hay muchas del mismo modelo.
+function searchableText(car) {
+  return normalize([
+    car.model, car.brand, car.series, car.year, car.color, car.location, car.country,
+    car.lineNumber, car.subseriesNumber, car.toyNumber, car.dateCode, car.assortment, car.gtin, car.notes,
+  ].filter(Boolean).join(' '))
+}
+
+// Numera las piezas repetidas: "pieza 2 de 3". Se calcula sobre la colección
+// completa, no sobre el resultado filtrado, para que el número no cambie según
+// lo que esté escrito en el buscador.
+function copyLabels(cars) {
+  const totals = new Map()
+  for (const car of cars) {
+    const key = normalize(car.model)
+    totals.set(key, (totals.get(key) || 0) + 1)
+  }
+  const seen = new Map()
+  return cars.map((car) => {
+    const key = normalize(car.model)
+    const total = totals.get(key)
+    if (total < 2) return ''
+    const position = (seen.get(key) || 0) + 1
+    seen.set(key, position)
+    return `Pieza ${position} de ${total}`
+  })
+}
+
 function renderCars(cars, search = '') {
   const grid = document.querySelector('#cars-grid')
   const noResults = document.querySelector('#no-results')
   const term = normalize(search)
-  const matches = cars.filter((car) => normalize([car.model, car.brand, car.series, car.color, car.location].join(' ')).includes(term))
+  const labels = copyLabels(cars)
+  const matches = cars.map((car, index) => ({ car, index })).filter(({ car }) => searchableText(car).includes(term))
   noResults.hidden = matches.length > 0
-  grid.replaceChildren(...matches.map((car) => {
-    const realIndex = cars.indexOf(car)
+  grid.replaceChildren(...matches.map(({ car, index }) => {
     const card = document.createElement('article')
     card.className = 'car-card'
-    const tags = [car.series, car.year, car.color, car.package, car.location].filter(Boolean)
+    const numbering = [car.lineNumber, car.subseriesNumber].filter(Boolean).join(' · ')
+    const codes = [car.toyNumber, car.dateCode, car.assortment, car.gtin].filter(Boolean).join(' · ')
+    const tags = [car.series, car.year, car.color, car.package, car.location, car.country].filter(Boolean)
       .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')
     card.innerHTML = `
       <p class="eyebrow">${escapeHtml(car.brand || 'Hot Wheels')}</p>
       <h3>${escapeHtml(car.model)}</h3>
+      ${numbering ? `<p class="card-numbering">${escapeHtml(numbering)}</p>` : ''}
       ${car.notes ? `<p>${escapeHtml(car.notes)}</p>` : ''}
       ${tags ? `<div class="tag-row">${tags}</div>` : ''}
-      <div class="quantity">${car.quantity === 1 ? '1 unidad' : `${car.quantity} unidades`}</div>
+      ${codes ? `<p class="card-codes">${escapeHtml(codes)}</p>` : ''}
+      ${labels[index] ? `<div class="quantity">${labels[index]}</div>` : ''}
+      ${car.addedAt ? `<p class="card-meta">Registrada el ${escapeHtml(formatDate(car.addedAt))}</p>` : ''}
       <div class="card-actions">
-        <button class="text-button" type="button" data-edit-car="${realIndex}">Editar</button>
-        <button class="text-button" type="button" data-delete-car="${realIndex}">Eliminar</button>
+        <button class="text-button" type="button" data-edit-car="${index}">Editar</button>
+        <button class="text-button" type="button" data-delete-car="${index}">Eliminar</button>
       </div>`
     return card
   }))
@@ -210,13 +289,94 @@ function renderWishlist(items) {
   }))
 }
 
+// Agrupa por un campo y devuelve pares [etiqueta, conteo] de mayor a menor.
+// `fallback` nombra a las piezas que no traen ese dato, en vez de esconderlas:
+// saber cuántas están sin clasificar es justamente parte del resumen.
+function groupBy(cars, field, fallback) {
+  const counts = new Map()
+  for (const car of cars) {
+    const label = String(car[field] ?? '').trim() || fallback
+    counts.set(label, (counts.get(label) || 0) + 1)
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])
+}
+
+function renderBars(id, rows, emptyId) {
+  const list = document.querySelector(id)
+  const max = rows.reduce((top, [, count]) => Math.max(top, count), 0)
+  list.replaceChildren(...rows.map(([label, count]) => {
+    const item = document.createElement('li')
+    item.innerHTML = `
+      <span class="bar-label">${escapeHtml(label)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width: ${Math.round((count / max) * 100)}%"></span></span>
+      <span class="bar-value">${count}</span>`
+    return item
+  }))
+  if (emptyId) document.querySelector(emptyId).hidden = rows.length > 0
+}
+
+// Datos del blister que conviene tener y suelen quedar pendientes cuando se
+// registra una pieza a las apuradas.
+const COMPLETABLE = [
+  ['toyNumber', 'Sin toy number'],
+  ['dateCode', 'Sin date code'],
+  ['lineNumber', 'Sin número de línea'],
+  ['assortment', 'Sin assortment'],
+  ['gtin', 'Sin GTIN'],
+]
+
+function renderDashboard(cars, modelCounts) {
+  document.querySelector('#dashboard-empty').hidden = cars.length > 0
+  document.querySelector('#dashboard-panels').hidden = cars.length === 0
+  if (!cars.length) return
+
+  // Últimas registradas: por fecha, y a igualdad de fecha (o sin fecha) manda
+  // el orden de captura, que es el más reciente al final del arreglo.
+  const recent = cars.map((car, index) => ({ car, index }))
+    .sort((a, b) => String(b.car.addedAt || '').localeCompare(String(a.car.addedAt || '')) || b.index - a.index)
+    .slice(0, 5)
+  document.querySelector('#recent-list').replaceChildren(...recent.map(({ car }) => {
+    const item = document.createElement('li')
+    const detail = [car.series, car.toyNumber, car.package].filter(Boolean).join(' · ')
+    item.innerHTML = `
+      <strong>${escapeHtml(car.model)}</strong>
+      ${detail ? `<span class="panel-detail">${escapeHtml(detail)}</span>` : ''}
+      ${car.addedAt ? `<span class="panel-date">${escapeHtml(formatDate(car.addedAt))}</span>` : ''}`
+    return item
+  }))
+
+  renderBars('#series-breakdown', groupBy(cars, 'series', 'Sin serie').slice(0, 6))
+  renderBars('#package-breakdown', groupBy(cars, 'package', 'Sin especificar'))
+
+  const repeated = [...modelCounts.entries()].filter(([, entry]) => entry.count > 1)
+    .sort((a, b) => b[1].count - a[1].count)
+  document.querySelector('#duplicates-empty').hidden = repeated.length > 0
+  document.querySelector('#duplicates-list').replaceChildren(...repeated.map(([, entry]) => {
+    const item = document.createElement('li')
+    item.innerHTML = `<strong>${escapeHtml(entry.model)}</strong><span class="panel-date">${entry.count} piezas</span>`
+    return item
+  }))
+
+  const pending = COMPLETABLE
+    .map(([field, label]) => [label, cars.filter((car) => !String(car[field] ?? '').trim()).length])
+    .filter(([, count]) => count > 0)
+  renderBars('#incomplete-breakdown', pending, '#incomplete-empty')
+}
+
 function render(data) {
   const cars = Array.isArray(data.cars) ? data.cars : []
   const wishlist = Array.isArray(data.wishlist) ? data.wishlist : []
+  // Un modelo por nombre normalizado, guardando el nombre tal como se escribió
+  // la primera vez para poder mostrarlo en el dashboard.
   const totalsByModel = new Map()
-  for (const car of cars) totalsByModel.set(normalize(car.model), (totalsByModel.get(normalize(car.model)) || 0) + Number(car.quantity || 1))
-  const totalCars = cars.reduce((total, car) => total + Number(car.quantity || 1), 0)
-  const duplicateCars = [...totalsByModel.values()].reduce((total, quantity) => total + Math.max(0, quantity - 1), 0)
+  for (const car of cars) {
+    const key = normalize(car.model)
+    const entry = totalsByModel.get(key) || { model: car.model, count: 0 }
+    entry.count += 1
+    totalsByModel.set(key, entry)
+  }
+  const totalCars = cars.length
+  const duplicateCars = [...totalsByModel.values()].reduce((total, { count }) => total + Math.max(0, count - 1), 0)
 
   document.querySelector('#collection-name').textContent = data.collectionName || 'Garage 164'
   document.querySelector('#updated-at').textContent = data.updatedAt ? `Actualizado el ${formatDate(data.updatedAt)}` : ''
@@ -225,9 +385,17 @@ function render(data) {
   stat(duplicateCars, '#duplicate-cars')
   stat(wishlist.length, '#wishlist-count')
 
+  document.querySelector('#collection-note').textContent = totalCars
+    ? `${totalCars} ${totalCars === 1 ? 'pieza' : 'piezas'} de ${totalsByModel.size} ${totalsByModel.size === 1 ? 'modelo' : 'modelos'}.`
+    : 'La colección está vacía.'
+  document.querySelector('#wishlist-note').textContent = wishlist.length
+    ? `${wishlist.length} ${wishlist.length === 1 ? 'pieza' : 'piezas'} por conseguir.`
+    : ''
+
   const searchValue = document.querySelector('#search').value
   renderCars(cars, searchValue)
   renderWishlist(wishlist)
+  renderDashboard(cars, totalsByModel)
 }
 
 function showSyncMessage(text, isError = false) {
@@ -240,6 +408,14 @@ function showSyncMessage(text, isError = false) {
 // Se mantienen dentro de la misma sesión para no guardar la contraseña ni la
 // llave de cifrado en el navegador entre páginas.
 function showView(view) {
+  currentView = view
+  const create = NAV_CREATE[view]
+  const createButton = document.querySelector('#nav-create')
+  createButton.hidden = !create
+  if (create) {
+    createButton.dataset.new = create.type
+    createButton.textContent = create.label
+  }
   document.querySelectorAll('.app-view').forEach((element) => {
     element.hidden = element.dataset.view !== view
   })
@@ -251,35 +427,46 @@ function showView(view) {
   })
 }
 
-function updateCreateTypeControls(type) {
-  document.querySelectorAll('[data-create-type]').forEach((button) => {
-    button.classList.toggle('is-active', button.dataset.createType === type)
-  })
-}
-
-function placeForm(type, hostId) {
+// Coloca el formulario que toca en la pantalla de trabajo y esconde el otro:
+// solo uno de los dos está montado a la vez.
+function placeForm(type) {
   const form = document.querySelector(type === 'car' ? '#car-form' : '#wish-form')
   document.querySelector(type === 'car' ? '#wish-form' : '#car-form').hidden = true
-  document.querySelector(`#${hostId}`).append(form)
+  document.querySelector('#form-host').append(form)
   form.hidden = false
 }
 
+function setWorkspaceTitle(eyebrow, title, description) {
+  document.querySelector('#workspace-eyebrow').textContent = eyebrow
+  document.querySelector('#workspace-title').textContent = title
+  document.querySelector('#workspace-description').textContent = description
+}
+
+function openWorkspace(type) {
+  if (CONTENT_VIEWS.includes(currentView)) editor.returnTo = currentView
+  editor.type = type
+  placeForm(type)
+  showView('workspace')
+  document.querySelector(type === 'car' ? '#car-model' : '#wish-model').focus()
+}
+
+// El tipo de ficha lo decide la sección desde la que se entra, no un selector
+// dentro del formulario.
 function openCreate(type = 'car') {
   editor.mode = 'create'
-  editor.type = type
   editor.index = null
-  document.querySelector('[data-view-target="edit"]').disabled = true
-  if (type === 'car') resetCarForm()
-  else resetWishForm()
-  placeForm(type, 'create-form-host')
-  updateCreateTypeControls(type)
-  showView('create')
-  document.querySelector(type === 'car' ? '#car-model' : '#wish-model').focus()
+  if (type === 'car') {
+    resetCarForm()
+    setWorkspaceTitle('Nuevo registro', 'Registrar carrito', 'Cada ficha es una pieza física. Solo el modelo es obligatorio.')
+  } else {
+    resetWishForm()
+    setWorkspaceTitle('Nuevo registro', 'Registrar pieza por conseguir', 'Anota lo que estás buscando. Solo el modelo es obligatorio.')
+  }
+  openWorkspace(type)
 }
 
 function openEdit(type, index) {
   editor.mode = 'edit'
-  editor.type = type
   editor.index = index
   const isCar = type === 'car'
   const entry = isCar ? session.data.cars[index] : session.data.wishlist[index]
@@ -292,20 +479,19 @@ function openEdit(type, index) {
     setVal('wish-edit-index', String(index))
     document.querySelector('#wish-form-submit').textContent = 'Guardar cambios'
   }
-  document.querySelector('#edit-title').textContent = `Editar ${isCar ? 'carrito' : 'pieza deseada'}`
-  document.querySelector('#edit-description').textContent = `Actualiza los datos de ${entry.model || 'esta pieza'} y guarda cuando termines.`
-  document.querySelector('[data-view-target="edit"]').disabled = false
-  placeForm(type, 'edit-form-host')
-  showView('edit')
-  document.querySelector(isCar ? '#car-model' : '#wish-model').focus()
+  setWorkspaceTitle(
+    'Actualización',
+    `Editar ${isCar ? 'carrito' : 'pieza por conseguir'}`,
+    `Actualiza los datos de ${entry.model || 'esta pieza'} y guarda cuando termines.`,
+  )
+  openWorkspace(type)
 }
 
-function returnToCollection() {
+function closeWorkspace(view) {
   document.querySelector('#car-form').hidden = true
   document.querySelector('#wish-form').hidden = true
   editor.index = null
-  document.querySelector('[data-view-target="edit"]').disabled = true
-  showView('collection')
+  showView(view || editor.returnTo || 'dashboard')
 }
 
 // --- Formularios de alta / edición ------------------------------------------
@@ -313,16 +499,27 @@ function returnToCollection() {
 function val(id) { return document.querySelector(`#${id}`).value.trim() }
 function setVal(id, value) { document.querySelector(`#${id}`).value = value ?? '' }
 
+// Los códigos del blister se guardan en mayúsculas y sin espacios sobrantes
+// para que dos registros del mismo assortment se vean —y se busquen— igual.
+function code(id) { return val(id).toUpperCase().replace(/\s+/g, '') }
+
 function readCarForm() {
   return {
     model: val('car-model'),
     brand: val('car-brand'),
     series: val('car-series'),
     year: val('car-year'),
+    lineNumber: val('car-line-number'),
+    subseriesNumber: val('car-subseries-number'),
+    toyNumber: code('car-toy-number'),
+    dateCode: code('car-date-code'),
+    assortment: code('car-assortment'),
+    gtin: val('car-gtin').replace(/[\s-]/g, ''),
     color: val('car-color'),
+    country: val('car-country'),
     package: val('car-package'),
     location: val('car-location'),
-    quantity: Number(val('car-quantity')) || 1,
+    addedAt: val('car-added-at'),
     notes: val('car-notes'),
   }
 }
@@ -332,16 +529,24 @@ function fillCarForm(car) {
   setVal('car-brand', car.brand)
   setVal('car-series', car.series)
   setVal('car-year', car.year)
+  setVal('car-line-number', car.lineNumber)
+  setVal('car-subseries-number', car.subseriesNumber)
+  setVal('car-toy-number', car.toyNumber)
+  setVal('car-date-code', car.dateCode)
+  setVal('car-assortment', car.assortment)
+  setVal('car-gtin', car.gtin)
   setVal('car-color', car.color)
+  setVal('car-country', car.country)
   setVal('car-package', car.package)
   setVal('car-location', car.location)
-  setVal('car-quantity', car.quantity ?? 1)
+  setVal('car-added-at', car.addedAt)
   setVal('car-notes', car.notes)
 }
 
 function resetCarForm() {
   document.querySelector('#car-form').reset()
   setVal('car-edit-index', '')
+  setVal('car-added-at', todayISO())
   document.querySelector('#car-form-submit').textContent = 'Registrar carrito'
   document.querySelector('#car-form-message').textContent = ''
 }
@@ -406,7 +611,7 @@ async function persistChange(mutate, { formEl, messageEl, onSuccess }) {
 async function reloadVault() {
   const { wire, etag } = await fetchVault()
   session.etag = etag
-  session.data = await decryptVault(session.password, wire)
+  session.data = adoptData(await decryptVault(session.password, wire))
   render(session.data)
 }
 
@@ -426,7 +631,8 @@ accessForm.addEventListener('submit', async (event) => {
   const password = passwordInput.value
   try {
     const { wire, etag } = await fetchVault()
-    const data = await decryptVault(password, wire)
+    const stored = await decryptVault(password, wire)
+    const data = adoptData(stored)
     session.password = password
     session.etag = etag
     session.data = data
@@ -435,7 +641,11 @@ accessForm.addEventListener('submit', async (event) => {
     accessShell.hidden = true
     garage.hidden = false
     render(data)
-    showView('collection')
+    showView('dashboard')
+    const separated = data.cars.length - (Array.isArray(stored.cars) ? stored.cars.length : 0)
+    if (separated > 0) {
+      showSyncMessage(`Se separaron ${separated} piezas repetidas en registros propios, para que cada una lleve su date code. El cambio se guarda con tu próxima edición.`)
+    }
   } catch (error) {
     formMessage.textContent = error.message.includes('operation') || error.name === 'OperationError'
       ? 'La contraseña no es correcta.'
@@ -448,26 +658,18 @@ accessForm.addEventListener('submit', async (event) => {
 
 document.querySelector('#lock-button').addEventListener('click', () => window.location.reload())
 
-document.querySelector('#header-create-button').addEventListener('click', () => openCreate())
-
 document.querySelectorAll('[data-view-target]').forEach((button) => {
-  button.addEventListener('click', () => {
-    const target = button.dataset.viewTarget
-    if (target === 'create') openCreate(editor.type)
-    else if (target === 'collection') returnToCollection()
-    else if (target === 'edit' && editor.index !== null) {
-      placeForm(editor.type, 'edit-form-host')
-      showView('edit')
-    }
-  })
+  button.addEventListener('click', () => closeWorkspace(button.dataset.viewTarget))
 })
 
-document.querySelectorAll('[data-back-to-collection]').forEach((button) => {
-  button.addEventListener('click', returnToCollection)
+document.querySelectorAll('[data-back]').forEach((button) => {
+  button.addEventListener('click', () => closeWorkspace())
 })
 
-document.querySelectorAll('[data-create-type]').forEach((button) => {
-  button.addEventListener('click', () => openCreate(button.dataset.createType))
+// Cada sección abre su propio tipo de ficha: Colección un carrito, Lista de
+// deseos una pieza por conseguir.
+document.querySelectorAll('[data-new]').forEach((button) => {
+  button.addEventListener('click', () => openCreate(button.dataset.new))
 })
 
 // --- Eventos: búsqueda --------------------------------------------------------
@@ -478,13 +680,9 @@ document.querySelector('#search').addEventListener('input', (event) => {
 
 // --- Eventos: formulario de carritos -------------------------------------
 
-document.querySelector('#show-car-form').addEventListener('click', () => {
-  openCreate('car')
-})
-
 document.querySelector('#car-form-cancel').addEventListener('click', () => {
   resetCarForm()
-  returnToCollection()
+  closeWorkspace()
 })
 
 document.querySelector('#car-form').addEventListener('submit', async (event) => {
@@ -495,6 +693,12 @@ document.querySelector('#car-form').addEventListener('submit', async (event) => 
     messageEl.textContent = 'El modelo es obligatorio.'
     return
   }
+  // El GTIN solo sirve si está exacto: un código a medias no localiza nada.
+  if (entry.gtin && !/^(\d{8}|\d{12,14})$/.test(entry.gtin)) {
+    messageEl.textContent = 'El GTIN debe tener 8, 12, 13 o 14 dígitos. Déjalo vacío si no lo tienes a mano.'
+    return
+  }
+  messageEl.textContent = ''
   const editIndex = val('car-edit-index')
   await persistChange(
     (data) => {
@@ -507,7 +711,7 @@ document.querySelector('#car-form').addEventListener('submit', async (event) => 
       messageEl,
       onSuccess: () => {
         resetCarForm()
-        returnToCollection()
+        closeWorkspace('collection')
       },
     },
   )
@@ -533,13 +737,9 @@ document.querySelector('#cars-grid').addEventListener('click', async (event) => 
 
 // --- Eventos: formulario de deseos -----------------------------------------
 
-document.querySelector('#show-wish-form').addEventListener('click', () => {
-  openCreate('wish')
-})
-
 document.querySelector('#wish-form-cancel').addEventListener('click', () => {
   resetWishForm()
-  returnToCollection()
+  closeWorkspace()
 })
 
 document.querySelector('#wish-form').addEventListener('submit', async (event) => {
@@ -562,7 +762,7 @@ document.querySelector('#wish-form').addEventListener('submit', async (event) =>
       messageEl,
       onSuccess: () => {
         resetWishForm()
-        returnToCollection()
+        closeWorkspace('wishlist')
       },
     },
   )
