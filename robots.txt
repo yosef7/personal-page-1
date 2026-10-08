@@ -1,2 +1,3 @@
 User-agent: *
 Disallow: /garage164/
+Sitemap: https://www.arnulforeyes.com/sitemap.xml

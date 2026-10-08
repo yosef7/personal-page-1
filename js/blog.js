@@ -9,11 +9,13 @@
       posts
         .sort((a, b) => (a.date > b.date ? -1 : 1))
         .forEach((post) => {
-          const date = (window.dayjs ? dayjs(post.date).format('MMM D, YYYY') : post.date);
+          const date = new Date(`${post.date}T12:00:00`).toLocaleDateString('es-PA', {
+            year: 'numeric', month: 'long', day: 'numeric'
+          });
           const el = document.createElement('div');
           el.className = 'post-preview';
           el.innerHTML = `
-            <a href="post.html?p=${encodeURIComponent(post.slug)}">
+            <a href="${post.url || `post.html?p=${encodeURIComponent(post.slug)}`}">
               <h2 class="post-title">${post.title}</h2>
               ${post.subtitle ? `<h3 class="post-subtitle">${post.subtitle}</h3>` : ''}
             </a>
@@ -33,4 +35,3 @@
       container.innerHTML = '<p>No se pudo cargar el listado de publicaciones.</p>';
     });
 })();
-

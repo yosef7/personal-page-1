@@ -114,6 +114,7 @@
   // Tipografía matemática: espera a que MathJax cargue (async) y compone solo
   // el contenido inyectado dinámicamente.
   function typesetMath() {
+    if (!contentEl.textContent.includes('$$') && !contentEl.textContent.includes('\\(') && !contentEl.textContent.includes('\\[')) return;
     const MJ = window.MathJax;
     if (!MJ) {
       setTimeout(typesetMath, 100);
@@ -141,10 +142,34 @@
     setAttr('meta[property="og:description"]', 'content', desc);
     setAttr('meta[name="twitter:title"]', 'content', `${post.title} - Arnulfo Reyes`);
     setAttr('meta[name="twitter:description"]', 'content', desc);
-    if (post.image) {
-      setAttr('meta[property="og:image"]', 'content', post.image);
-      setAttr('meta[name="twitter:image"]', 'content', post.image);
+    const postUrl = new URL(post.url || `post.html?p=${encodeURIComponent(post.slug)}`, window.location.href);
+    let canonical = document.head.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
     }
+    canonical.href = postUrl.href;
+    let ogUrl = document.head.querySelector('meta[property="og:url"]');
+    if (!ogUrl) {
+      ogUrl = document.createElement('meta');
+      ogUrl.setAttribute('property', 'og:url');
+      document.head.appendChild(ogUrl);
+    }
+    ogUrl.content = postUrl.href;
+    if (post.image) {
+      const imageUrl = new URL(post.image, window.location.href).href;
+      setAttr('meta[property="og:image"]', 'content', imageUrl);
+      setAttr('meta[name="twitter:image"]', 'content', imageUrl);
+    }
+  }
+
+  if (contentEl.dataset.static === 'true') {
+    wrapTables();
+    highlightCode();
+    renderMermaidDiagrams();
+    typesetMath();
+    return;
   }
 
   if (!slug) {
@@ -163,7 +188,7 @@
       updateMeta(post);
       titleEl.textContent = post.title;
       if (post.subtitle) subtitleEl.textContent = post.subtitle; else subtitleEl.remove();
-      const date = new Date(post.date);
+      const date = new Date(`${post.date}T12:00:00`);
       metaEl.textContent = `Publicado por ${post.author || 'Arnulfo Reyes'} el ${date.toLocaleDateString('es-PA', { year: 'numeric', month: 'short', day: 'numeric' })}`;
       if (post.image && headerEl) {
         headerEl.style.backgroundImage = `url('${post.image}')`;
@@ -177,6 +202,12 @@
     })
     .then((md) => {
       contentEl.innerHTML = window.marked ? marked.parse(md) : md;
+      // El encabezado de la página ya contiene el h1 del artículo.
+      contentEl.querySelectorAll('h1').forEach((heading) => {
+        const sectionHeading = document.createElement('h2');
+        sectionHeading.innerHTML = heading.innerHTML;
+        heading.replaceWith(sectionHeading);
+      });
       wrapTables();
       highlightCode();
       renderMermaidDiagrams();

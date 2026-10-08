@@ -1,6 +1,7 @@
 [
   {
     "slug": "escalar-sin-romper",
+    "url": "escalar-sin-romper.html",
     "title": "Escalar lo que funciona sin romperlo",
     "subtitle": "Cinco años de investigación sobre tutoría y lo que enseñan a quien dirige tecnología.",
     "date": "2026-06-15",
@@ -9,6 +10,7 @@
   },
   {
     "slug": "liderazgo-360",
+    "url": "liderazgo-360.html",
     "title": "Liderazgo técnico 360",
     "subtitle": "Un sistema práctico para recibir retroalimentación y mejorar como líder técnico.",
     "date": "2026-05-23",
@@ -17,6 +19,7 @@
   },
   {
     "slug": "que-tan-ciertas-son-las-estadisticas",
+    "url": "que-tan-ciertas-son-las-estadisticas.html",
     "title": "¿Qué tan ciertas son las estadísticas?",
     "subtitle": "Ser crítico al analizar datos para evitar sesgos y engaños.",
     "date": "2019-06-16",

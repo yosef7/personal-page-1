@@ -110,3 +110,7 @@ La aportación central del artículo de Fisher, traducida al contexto técnico, 
 Para un líder técnico o de operaciones, el siguiente paso es concreto y barato: **diseñar un 360 propio, recolectar señales de los tres ángulos, identificar patrones y comprometerse con uno o dos cambios medibles antes del próximo ciclo de revisión**. No requiere presupuesto, herramientas nuevas ni aprobación. Solo requiere la disposición —parafraseando a Lincoln vía Fisher— de hacer la pregunta más difícil antes que las fáciles: no *"¿soy lo suficientemente confiado?"*, sino *"¿estoy siendo honesto conmigo mismo?"*.
 
 Esa es, en última instancia, la primera línea de instrumentación de cualquier sistema de liderazgo bien diseñado.
+
+Gracias por leer mi publicación. Recibo con mucho agrado los comentarios y las críticas constructivas.
+
+Me pueden encontrar en IG @arnulfo.

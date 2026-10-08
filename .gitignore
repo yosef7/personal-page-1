@@ -1,6 +1,7 @@
 # Proyecto / herramientas locales
 AGENTS.md
 .playwright-mcp/
+.private-notes/
 
 # Claude Code: versionar solo los skills del proyecto, ignorar config local
 .claude/*
