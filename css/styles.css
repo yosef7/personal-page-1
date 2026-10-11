@@ -12274,6 +12274,18 @@ header.masthead .post-heading .meta a {
   border-radius: 50%;
 }
 
+/* Retrato de "Sobre mí": círculo fijo, sin deformar la foto. */
+.about-portrait {
+  display: block;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 0 0 1px #d5e6ea, 0 12px 28px rgba(0, 54, 66, 0.18);
+}
+
 .author-name {
   margin-top: 1rem;
   margin-bottom: 1.25rem;
@@ -12588,7 +12600,8 @@ h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
 }
 
 /* Iconos de servicios: glifo blanco sobre el círculo de marca. */
-.features-icons-icon i {
+.features-icons-icon i,
+.features-icons-icon svg {
   color: #fff !important;
 }
 
@@ -12627,6 +12640,127 @@ h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
 
 .features-icons-item:hover h3 {
   color: #0085a1;
+}
+
+/* Tarjetas de la portada como enlaces a su página de detalle. */
+a.features-icons-item {
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.features-icons-more {
+  display: inline-block;
+  margin-top: auto;
+  padding-top: 1.1rem;
+  color: #006d85;
+  font: 600 .95rem "Open Sans", sans-serif;
+}
+
+/* Páginas de detalle (mentoría, conferencias): listas, pasos y formatos. */
+.offer-list,
+.offer-steps,
+.offer-chips {
+  margin: 0 0 1.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.offer-list li {
+  position: relative;
+  margin-bottom: 0.6rem;
+  padding-left: 1.7rem;
+}
+
+.offer-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #0085a1;
+  font-weight: 700;
+}
+
+.offer-steps {
+  counter-reset: paso;
+}
+
+.offer-steps li {
+  position: relative;
+  margin-bottom: 0.75rem;
+  padding-left: 2.4rem;
+  counter-increment: paso;
+}
+
+.offer-steps li::before {
+  content: counter(paso);
+  position: absolute;
+  top: 0.15rem;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: #eaf5f7;
+  color: #006d85;
+  font: 700 0.85rem "Open Sans", sans-serif;
+}
+
+.offer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.offer-chips li {
+  padding: 0.3rem 0.85rem;
+  border: 1px solid #cfe3e8;
+  border-radius: 999px;
+  background: #f3f9fa;
+  color: #00556a;
+  font: 600 0.88rem "Open Sans", sans-serif;
+}
+
+.offer-topic {
+  margin-bottom: 1.25rem;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid #e7ecef;
+  border-left: 4px solid #0085a1;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.offer-topic h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.2rem;
+}
+
+.offer-topic p {
+  margin: 0;
+}
+
+.offer-topic a {
+  font: 600 0.92rem "Open Sans", sans-serif;
+}
+
+.offer-aside {
+  margin: 2rem 0;
+  padding: 1.5rem 1.6rem;
+  border-radius: 12px;
+  background: #eaf5f7;
+}
+
+.offer-aside h2 {
+  margin-top: 0;
+}
+
+.offer-aside p:last-child {
+  margin-bottom: 0;
+}
+
+.detail-actions {
+  margin: 1.5rem 0 2.5rem;
 }
 
 /* Publicaciones destacadas y contacto de la portada. */
