@@ -13,7 +13,7 @@ description: >-
 Los diagramas se escriben **dentro del Markdown del post** como bloques
 ` ```mermaid ... ``` `. No se editan en HTML ni JS: `js/post.js` los detecta,
 los envuelve en `<figure class="post-diagram">` y los inicializa **después** de
-cargar el Markdown. Mermaid 10 llega por CDN en [post.html](../../../post.html).
+cargar el Markdown. Mermaid 10 llega por CDN en [blog/post.html](../../../blog/post.html).
 
 Úsalos solo cuando aporten (flujos, modelos, relaciones, decisiones). Para datos
 tabulares o listas simples, prefiere texto/tablas.
@@ -113,7 +113,7 @@ Mermaid corre por `fetch` + JS, así que valida **por HTTP**, no abriendo el HTM
 python3 -m http.server 8001
 ```
 
-- Abre `http://127.0.0.1:8001/post.html?p=<slug>` y confirma que el diagrama
+- Abre `http://127.0.0.1:8001/blog/post.html?p=<slug>` y confirma que el diagrama
   **renderiza como SVG** (no queda como bloque de código).
 - Revisa que no haya errores de sintaxis Mermaid en la consola del navegador
   (si falla, `mermaid.run` lo captura y el bloque puede quedar vacío).

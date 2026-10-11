@@ -11,6 +11,9 @@
   const headerEl = document.getElementById('post-header');
   const contentEl = document.getElementById('post-content');
 
+  // Las rutas de posts.json son relativas a la raíz del sitio, no a /blog/.
+  const fromRoot = (path) => new URL(path, `${window.location.origin}/`).href;
+
   // Config común a todos los diagramas (independiente del tema).
   const MERMAID_BASE_CONFIG = {
     startOnLoad: false,
@@ -142,23 +145,23 @@
     setAttr('meta[property="og:description"]', 'content', desc);
     setAttr('meta[name="twitter:title"]', 'content', `${post.title} - Arnulfo Reyes`);
     setAttr('meta[name="twitter:description"]', 'content', desc);
-    const postUrl = new URL(post.url || `post.html?p=${encodeURIComponent(post.slug)}`, window.location.href);
+    const postUrl = fromRoot(post.url || `blog/post.html?p=${encodeURIComponent(post.slug)}`);
     let canonical = document.head.querySelector('link[rel="canonical"]');
     if (!canonical) {
       canonical = document.createElement('link');
       canonical.rel = 'canonical';
       document.head.appendChild(canonical);
     }
-    canonical.href = postUrl.href;
+    canonical.href = postUrl;
     let ogUrl = document.head.querySelector('meta[property="og:url"]');
     if (!ogUrl) {
       ogUrl = document.createElement('meta');
       ogUrl.setAttribute('property', 'og:url');
       document.head.appendChild(ogUrl);
     }
-    ogUrl.content = postUrl.href;
+    ogUrl.content = postUrl;
     if (post.image) {
-      const imageUrl = new URL(post.image, window.location.href).href;
+      const imageUrl = fromRoot(post.image);
       setAttr('meta[property="og:image"]', 'content', imageUrl);
       setAttr('meta[name="twitter:image"]', 'content', imageUrl);
     }
@@ -174,11 +177,11 @@
 
   if (!slug) {
     titleEl.textContent = 'Publicación no encontrada';
-    contentEl.innerHTML = '<p>No se especificó ninguna publicación. <a href="blog.html">Volver al blog</a>.</p>';
+    contentEl.innerHTML = '<p>No se especificó ninguna publicación. <a href="/blog/">Volver al blog</a>.</p>';
     return;
   }
 
-  fetch('posts/posts.json', { cache: 'no-store' })
+  fetch('/posts/posts.json', { cache: 'no-store' })
     .then((r) => r.json())
     .then((posts) => {
       const post = posts.find((p) => p.slug === slug);
@@ -191,10 +194,10 @@
       const date = new Date(`${post.date}T12:00:00`);
       metaEl.textContent = `Publicado por ${post.author || 'Arnulfo Reyes'} el ${date.toLocaleDateString('es-PA', { year: 'numeric', month: 'short', day: 'numeric' })}`;
       if (post.image && headerEl) {
-        headerEl.style.backgroundImage = `url('${post.image}')`;
+        headerEl.style.backgroundImage = `url('${fromRoot(post.image)}')`;
       }
 
-      return fetch(`posts/${encodeURIComponent(slug)}.md`, { cache: 'no-store' });
+      return fetch(`/posts/${encodeURIComponent(slug)}.md`, { cache: 'no-store' });
     })
     .then((r) => {
       if (!r.ok) throw new Error('md-missing');
@@ -215,6 +218,6 @@
     })
     .catch(() => {
       titleEl.textContent = 'No se pudo cargar el artículo';
-      contentEl.innerHTML = '<p>Intenta nuevamente más tarde o vuelve al <a href="blog.html">listado</a>.</p>';
+      contentEl.innerHTML = '<p>Intenta nuevamente más tarde o vuelve al <a href="/blog/">listado</a>.</p>';
     });
 })();

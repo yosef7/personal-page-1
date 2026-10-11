@@ -32,8 +32,8 @@ Un post = **dos cambios sincronizados**:
    }
    ```
 
-El listado (`blog.html`) ordena por `date` descendente. La cabecera de
-`post.html?p=<slug>` usa el campo `image` como fondo. El `slug` de `posts.json`
+El listado (`blog/index.html`) ordena por `date` descendente. La cabecera de
+`blog/post.html?p=<slug>` usa el campo `image` como fondo. El `slug` de `posts.json`
 **debe** coincidir con el nombre del archivo `.md`.
 
 ## Reglas (de AGENTS.md)
@@ -86,8 +86,8 @@ python3 -m http.server 8001
 Luego comprueba:
 - `posts/posts.json` es JSON válido (p. ej. `python3 -m json.tool posts/posts.json`).
 - Existe `posts/<slug>.md` y el `slug` figura en `posts.json`.
-- `http://127.0.0.1:8001/post.html?p=<slug>` carga y devuelve `200 OK`.
-- `http://127.0.0.1:8001/blog.html` muestra el post en el listado.
+- `http://127.0.0.1:8001/blog/post.html?p=<slug>` carga y devuelve `200 OK`.
+- `http://127.0.0.1:8001/blog/` muestra el post en el listado.
 - Si hay diagramas Mermaid, confirma que renderizan tras cargar el Markdown.
 - Si hay automatización de navegador disponible, inspecciona la página renderizada.
 

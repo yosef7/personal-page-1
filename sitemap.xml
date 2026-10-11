@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://www.arnulforeyes.com/</loc></url>
-  <url><loc>https://www.arnulforeyes.com/about.html</loc></url>
-  <url><loc>https://www.arnulforeyes.com/mentoria.html</loc></url>
-  <url><loc>https://www.arnulforeyes.com/conferencias.html</loc></url>
-  <url><loc>https://www.arnulforeyes.com/blog.html</loc></url>
-  <url><loc>https://www.arnulforeyes.com/escalar-sin-romper.html</loc></url>
-  <url><loc>https://www.arnulforeyes.com/liderazgo-360.html</loc></url>
-  <url><loc>https://www.arnulforeyes.com/que-tan-ciertas-son-las-estadisticas.html</loc></url>
+  <url><loc>https://www.arnulforeyes.com/about/</loc></url>
+  <url><loc>https://www.arnulforeyes.com/mentoria/</loc></url>
+  <url><loc>https://www.arnulforeyes.com/conferencias/</loc></url>
+  <url><loc>https://www.arnulforeyes.com/blog/</loc></url>
+  <url><loc>https://www.arnulforeyes.com/blog/escalar-sin-romper/</loc></url>
+  <url><loc>https://www.arnulforeyes.com/blog/liderazgo-360/</loc></url>
+  <url><loc>https://www.arnulforeyes.com/blog/que-tan-ciertas-son-las-estadisticas/</loc></url>
 </urlset>

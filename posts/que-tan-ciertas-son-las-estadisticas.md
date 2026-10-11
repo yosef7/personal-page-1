@@ -6,7 +6,7 @@ Te invito a leer mis publicaciones en mi blog de Medium. Puedes encontrarme en: 
 
 Las estadísticas se han utilizado para mentir en anuncios, presentaciones, en lugares de trabajo y en muchos otros lugares. Créeme: la gente hará cualquier cosa para obtener ventas o buenas calificaciones.
 
-![Gráfica de estadísticas](assets/img/stats.jfif)
+![Gráfica de estadísticas](/assets/img/stats.jfif)
 *Photo by Chris Liverani on Unsplash*
 
 Desde hace varios meses esta idea ha estado dándole vueltas a mi cabeza.
@@ -21,7 +21,7 @@ Es bastante incómodo ver estas investigaciones y al poco tiempo darte cuenta qu
 
 Me parece muy interesante el siguiente libro: [Cómo mentir con estadísticas de Darrell Huff](https://www.amazon.com/-/es/Darrell-Huff/dp/0393310728). Cuando observo las páginas 59–60–61, veo que estos ejemplos los podemos ver actualmente. ¿Cuántos de nosotros no hemos estado en reuniones donde, de manera muy sutil, se juega con la visualización de los datos?
 
-[![Portada del libro 'How to Lie with Statistics'](assets/img/grap.png)](https://www.amazon.com/-/es/Darrell-Huff/dp/0393310728)
+[![Portada del libro 'How to Lie with Statistics'](/assets/img/grap.png)](https://www.amazon.com/-/es/Darrell-Huff/dp/0393310728)
 > *How to lie with statistics*
 
 No debemos olvidar el objetivo principal de los dashboard o las visualizaciones.

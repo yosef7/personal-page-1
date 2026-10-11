@@ -1,0 +1,39 @@
+name: Validar sitio
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Posts, sitemap y referencias locales
+        run: python3 scripts/check-site.py
+
+      - name: Sintaxis de la Netlify Function y de Garage 164
+        run: |
+          node --check netlify/functions/vault.mjs
+          node --check garage164/app.js
+          node --check garage164/tools/publish-vault.mjs
+          for f in js/*.js; do node --check "$f"; done
+
+      - name: Sintaxis de los scripts de shell
+        run: for f in garage164/tools/*.sh; do bash -n "$f"; done
+
+      - name: Garage 164 no publica datos en claro
+        run: |
+          if git ls-files --error-unmatch garage164/data.json >/dev/null 2>&1; then
+            echo "::error::garage164/data.json está versionado y no debe estarlo"
+            exit 1
+          fi

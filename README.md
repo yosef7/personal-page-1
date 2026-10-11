@@ -10,19 +10,28 @@ Sitio estático personal con blog en Markdown. Sin build tools ni frameworks: **
 
 ## 1. Qué incluye
 
-| Página | Archivo | Qué hace |
-| --- | --- | --- |
-| Inicio | `index.html` | Presentación, secciones de perfil y contacto |
-| Sobre mí | `about.html` | Biografía y trayectoria |
-| Blog | `blog.html` | Listado de publicaciones (se genera desde `posts/posts.json`) |
-| Publicación | `post.html?p=<slug>` | Renderiza `posts/<slug>.md` en el navegador |
-| Garage 164 | `garage164/` | Zona privada cifrada y editable en vivo, sin enlaces desde el sitio ([detalles](garage164/README.md)) |
+Cada página vive en su propia carpeta con un `index.html`, así las URLs quedan limpias (sin `.html`):
 
-El blog **no se compila**: `post.html` es una sola plantilla que lee el slug de la URL, busca los metadatos en `posts/posts.json` y descarga el Markdown con `fetch`.
+| Página | URL | Archivo | Qué hace |
+| --- | --- | --- | --- |
+| Inicio | `/` | `index.html` | Presentación, secciones de perfil y contacto |
+| Sobre mí | `/about/` | `about/index.html` | Biografía y trayectoria |
+| Mentoría | `/mentoria/` | `mentoria/index.html` | Programa de mentoría |
+| Conferencias | `/conferencias/` | `conferencias/index.html` | Charlas y presentaciones |
+| Blog | `/blog/` | `blog/index.html` | Listado de publicaciones (se genera desde `posts/posts.json`) |
+| Artículo | `/blog/<slug>/` | `blog/<slug>/index.html` | Versión estática e indexable de cada post |
+| Vista previa | `/blog/post.html?p=<slug>` | `blog/post.html` | Renderiza `posts/<slug>.md` en el navegador |
+| Garage 164 | `/garage164/` | `garage164/` | Zona privada cifrada y editable en vivo, sin enlaces desde el sitio ([detalles](garage164/README.md)) |
+
+Las URLs antiguas (`/about.html`, `/escalar-sin-romper.html`, etc.) redirigen con 301 a las nuevas desde `netlify.toml`.
+
+Todos los enlaces internos usan rutas desde la raíz (`/css/styles.css`, `/blog/`), así una página funciona igual sin importar en qué carpeta esté.
+
+El blog **no se compila**: `blog/post.html` es una sola plantilla que lee el slug de la URL, busca los metadatos en `posts/posts.json` y descarga el Markdown con `fetch`.
 
 ## 2. Stack
 
-Todo se carga desde CDN, no hay `package.json` ni dependencias instaladas:
+El sitio público se carga desde CDN, sin dependencias instaladas. El `package.json` solo existe para la Netlify Function de Garage 164 (`@netlify/blobs`) y para atajos de terminal:
 
 - **Bootstrap 5.1.3** + tema *Start Bootstrap – Clean Blog* (base de `css/styles.css` y `js/scripts.js`)
 - **marked** — Markdown → HTML
@@ -36,42 +45,55 @@ Todo se carga desde CDN, no hay `package.json` ni dependencias instaladas:
 
 ```
 .
-├── index.html            # Inicio
-├── about.html            # Sobre mí
-├── blog.html             # Listado del blog
-├── post.html             # Plantilla de artículo (?p=<slug>)
-├── css/styles.css        # Estilos del sitio (incluye Bootstrap)
+├── index.html                    # Inicio  → /
+├── about/index.html              # Sobre mí → /about/
+├── mentoria/index.html           # Mentoría → /mentoria/
+├── conferencias/index.html       # Conferencias → /conferencias/
+├── blog/
+│   ├── index.html                # Listado → /blog/
+│   ├── post.html                 # Plantilla dinámica (?p=<slug>)
+│   └── <slug>/index.html         # Artículo estático → /blog/<slug>/
+├── css/styles.css                # Estilos del sitio (incluye Bootstrap)
 ├── js/
-│   ├── scripts.js        # Navbar y comportamiento del tema base
-│   ├── blog.js           # Construye el listado desde posts/posts.json
-│   └── post.js           # Carga el .md, Mermaid, highlight.js, MathJax y meta OG
+│   ├── scripts.js                # Navbar y comportamiento del tema base
+│   ├── blog.js                   # Construye el listado desde posts/posts.json
+│   └── post.js                   # Carga el .md, Mermaid, highlight.js, MathJax y meta OG
 ├── posts/
-│   ├── posts.json        # Índice de publicaciones (metadatos)
-│   └── <slug>.md         # Contenido de cada publicación
+│   ├── posts.json                # Índice de publicaciones (metadatos)
+│   └── <slug>.md                 # Contenido de cada publicación
 ├── assets/
-│   ├── img/              # Imágenes de portada y de posts
-│   └── *.ico             # Favicons
-├── garage164/            # Zona privada cifrada, editable en vivo (ver su propio README)
-├── netlify/functions/
-│   └── vault.mjs         # Lee/guarda el vault de Garage 164 en Netlify Blobs
-├── robots.txt            # Bloquea /garage164/ a los buscadores
-└── _headers              # Cabeceras noindex/no-store para /garage164/*
+│   ├── img/                      # Imágenes de portada y de posts
+│   └── *.ico                     # Favicons
+├── garage164/                    # Zona privada cifrada, editable en vivo (ver su propio README)
+├── netlify/functions/vault.mjs   # Lee/guarda el vault de Garage 164 en Netlify Blobs
+├── scripts/check-site.py         # Validación del sitio (posts, sitemap, enlaces locales)
+├── .github/
+│   ├── workflows/check.yml       # CI: corre la validación en cada push y PR
+│   └── dependabot.yml            # Actualizaciones mensuales de npm y Actions
+├── .claude/skills/               # Skills del proyecto para Claude Code
+├── robots.txt, sitemap.xml       # SEO
+├── _headers                      # Cabeceras noindex/no-store para /garage164/*
+├── netlify.toml                  # Netlify: Functions y redirecciones 301 de URLs antiguas
+├── .editorconfig                 # Estilo común: UTF-8, LF, 2 espacios
+├── .gitattributes                # LF en texto, binarios marcados
+├── .gitignore                    # Secretos, datos privados, temporales y del sistema
+└── .nvmrc                        # Versión de Node para la Function
 ```
 
 ## 4. Requisitos
 
 - **Python 3** (para el servidor local) — viene preinstalado en macOS.
-- **Node.js** — solo si vas a publicar la colección de `garage164/` desde la terminal.
+- **Node.js 20+** (ver `.nvmrc`) — solo si vas a publicar la colección de `garage164/` desde la terminal.
 - Un navegador moderno y conexión a internet (las librerías vienen de CDN).
 
-No hay `npm install`. No hay paso de compilación.
+No hay `npm install` para el sitio público. No hay paso de compilación.
 
 ## 5. Levantar el sitio en local
 
 ```zsh
 git clone https://github.com/yosef7/personal-page-1.git
 cd personal-page-1
-python3 -m http.server 8001
+python3 -m http.server 8001   # o: npm run serve
 ```
 
 Abre <http://127.0.0.1:8001/>.
@@ -85,8 +107,9 @@ URLs útiles mientras trabajas:
 | Qué revisar | URL |
 | --- | --- |
 | Inicio | `http://127.0.0.1:8001/` |
-| Blog | `http://127.0.0.1:8001/blog.html` |
-| Un post | `http://127.0.0.1:8001/post.html?p=escalar-sin-romper` |
+| Blog | `http://127.0.0.1:8001/blog/` |
+| Un artículo | `http://127.0.0.1:8001/blog/escalar-sin-romper/` |
+| Vista previa de un `.md` | `http://127.0.0.1:8001/blog/post.html?p=escalar-sin-romper` |
 | Garage 164 | `http://127.0.0.1:8001/garage164/` |
 
 Para detener el servidor: `Ctrl+C`. Si el puerto está ocupado, usa otro (`python3 -m http.server 8002`).
@@ -135,8 +158,8 @@ Agrega el objeto al **inicio** del arreglo:
 ### Paso 4 — Verifica
 
 ```zsh
-python3 -c "import json;json.load(open('posts/posts.json'));print('JSON válido')"
-curl -s -o /dev/null -w "%{http_code}\n" "http://127.0.0.1:8001/post.html?p=mi-nuevo-articulo"
+python3 scripts/check-site.py   # o: npm run check
+curl -s -o /dev/null -w "%{http_code}\n" "http://127.0.0.1:8001/blog/post.html?p=mi-nuevo-articulo"
 ```
 
 Y abre la página en el navegador: el título, la fecha, la imagen del encabezado y el contenido deben verse bien en móvil y escritorio.
@@ -181,7 +204,8 @@ def hola():
 - Cualquier elemento visual ancho (diagramas, tablas, imágenes) debe ser responsivo.
 - El idioma por defecto del sitio y de los posts es español.
 - Los posts se escriben para escanearse: secciones claras, ejemplos concretos, conclusiones accionables.
-- Antes de dar por terminado un cambio, verifica que las páginas afectadas respondan `200 OK` sobre HTTP.
+- Antes de dar por terminado un cambio, corre `python3 scripts/check-site.py` y verifica que las páginas afectadas respondan `200 OK` sobre HTTP.
+- Si agregas una página pública, súmala a `sitemap.xml`.
 
 ## 9. Zona privada: Garage 164
 
@@ -199,7 +223,7 @@ Como no hay compilación, el despliegue consiste en copiar la raíz del reposito
 - `netlify/functions/vault.mjs` se detecta y despliega automáticamente por estar en `netlify/functions/` — no requiere `netlify.toml` ni build.
 - Esa función depende de la variable de entorno `GARAGE164_WRITE_HASH` (Site settings → Environment variables). Sin ella, la lectura de Garage 164 funciona pero cualquier intento de guardar falla con 403. Ver [garage164/README.md](garage164/README.md#4-configuración-inicial-paso-a-paso).
 - No se requiere paso de build ni comando de instalación para el resto del sitio.
-- Antes de desplegar, confirma que `posts/posts.json` sea JSON válido y que `garage164/data.json` no esté siendo subido.
+- GitHub Actions (`.github/workflows/check.yml`) valida cada push y PR: posts, sitemap, enlaces locales, sintaxis de los JS y que `garage164/data.json` no esté versionado. Si falla, revisa antes de que Netlify publique.
 
 ## 11. Problemas frecuentes
 

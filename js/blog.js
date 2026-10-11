@@ -3,7 +3,7 @@
   const container = document.getElementById('posts-list');
   if (!container) return;
 
-  fetch('posts/posts.json', { cache: 'no-store' })
+  fetch('/posts/posts.json', { cache: 'no-store' })
     .then((r) => r.json())
     .then((posts) => {
       posts
@@ -15,7 +15,7 @@
           const el = document.createElement('div');
           el.className = 'post-preview';
           el.innerHTML = `
-            <a href="${post.url || `post.html?p=${encodeURIComponent(post.slug)}`}">
+            <a href="${post.url || `/blog/post.html?p=${encodeURIComponent(post.slug)}`}">
               <h2 class="post-title">${post.title}</h2>
               ${post.subtitle ? `<h3 class="post-subtitle">${post.subtitle}</h3>` : ''}
             </a>

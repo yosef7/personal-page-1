@@ -1,2 +1,21 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normaliza finales de línea a LF en todos los archivos de texto
+* text=auto eol=lf
+
+# Scripts de shell siempre con LF (se ejecutan en macOS/Linux)
+*.sh   text eol=lf
+
+# Binarios: sin conversión ni diff de texto
+*.jpg  binary
+*.jpeg binary
+*.jfif binary
+*.png  binary
+*.gif  binary
+*.webp binary
+*.avif binary
+*.ico  binary
+*.pdf  binary
+*.woff binary
+*.woff2 binary
+
+# Archivos generados: fuera de las estadísticas de lenguaje y diffs colapsados
+package-lock.json linguist-generated=true -diff

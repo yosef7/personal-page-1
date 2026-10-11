@@ -1,2 +1,52 @@
 [functions]
   directory = "netlify/functions"
+
+# ─────────────────────────────────────────────────────────────
+# Redirecciones permanentes desde las URLs antiguas (.html en la raíz)
+# para conservar el posicionamiento y los enlaces ya compartidos.
+# ─────────────────────────────────────────────────────────────
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/about.html"
+  to = "/about/"
+  status = 301
+
+[[redirects]]
+  from = "/mentoria.html"
+  to = "/mentoria/"
+  status = 301
+
+[[redirects]]
+  from = "/conferencias.html"
+  to = "/conferencias/"
+  status = 301
+
+[[redirects]]
+  from = "/blog.html"
+  to = "/blog/"
+  status = 301
+
+# Los parámetros (?p=<slug>) se conservan automáticamente
+[[redirects]]
+  from = "/post.html"
+  to = "/blog/post.html"
+  status = 301
+
+[[redirects]]
+  from = "/escalar-sin-romper.html"
+  to = "/blog/escalar-sin-romper/"
+  status = 301
+
+[[redirects]]
+  from = "/liderazgo-360.html"
+  to = "/blog/liderazgo-360/"
+  status = 301
+
+[[redirects]]
+  from = "/que-tan-ciertas-son-las-estadisticas.html"
+  to = "/blog/que-tan-ciertas-son-las-estadisticas/"
+  status = 301
